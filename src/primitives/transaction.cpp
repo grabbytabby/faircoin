@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "chainparams.h"
 
 std::string COutPoint::ToString() const
 {
@@ -139,4 +140,9 @@ std::string CTransaction::ToString() const
     for (unsigned int i = 0; i < vout.size(); i++)
         str += "    " + vout[i].ToString() + "\n";
     return str;
+}
+
+CAmount CTxOut::GetDustThreshold(const CFeeRate &minRelayTxFee) const
+{
+    return dynParams.nDustThreshold;
 }

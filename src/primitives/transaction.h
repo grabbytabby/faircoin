@@ -135,22 +135,7 @@ public:
 
     uint256 GetHash() const;
 
-    CAmount GetDustThreshold(const CFeeRate &minRelayTxFee) const
-    {
-        // "Dust" is defined in terms of CTransaction::minRelayTxFee,
-        // which has units satoshis-per-kilobyte.
-        // If you'd pay more than 1/3 in fees
-        // to spend something, then we consider it dust.
-        // A typical spendable txout is 34 bytes big, and will
-        // need a CTxIn of at least 148 bytes to spend:
-        // so dust is a spendable txout less than
-        // 546*minRelayTxFee/1000 (in satoshis)
-        if (scriptPubKey.IsUnspendable())
-            return 0;
-
-        size_t nSize = GetSerializeSize(SER_DISK,0)+148u;
-        return 3*minRelayTxFee.GetFee(nSize);
-    }
+    CAmount GetDustThreshold(const CFeeRate &minRelayTxFee) const;
 
     bool IsDust(const CFeeRate &minRelayTxFee) const
     {
