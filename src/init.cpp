@@ -104,6 +104,11 @@ enum BindFlags {
 static const char* FEE_ESTIMATES_FILENAME="fee_estimates.dat";
 CClientUIInterface uiInterface; // Declared but not defined in ui_interface.h
 
+// Omni Core initialization and shutdown handlers
+extern int mastercore_init();
+extern int mastercore_shutdown();
+extern int CheckWalletUpdate(bool forceUpdate = false);
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // Shutdown
@@ -234,6 +239,10 @@ void Shutdown()
         delete pblocktree;
         pblocktree = NULL;
     }
+
+    //! Omni Core shutdown
+    mastercore_shutdown();
+
 #ifdef ENABLE_WALLET
     if (pwalletMain)
         pwalletMain->Flush(true);
@@ -280,6 +289,7 @@ void HandleSIGTERM(int)
 void HandleSIGHUP(int)
 {
     fReopenDebugLog = true;
+    fReopenOmniCoreLog = true;
 }
 
 bool static InitError(const std::string &str)
@@ -528,7 +538,27 @@ std::string HelpMessage(HelpMessageMode mode)
     if (showDebug) {
         strUsage += HelpMessageOpt("-rpcworkqueue=<n>", strprintf("Set the depth of the work queue to service RPC calls (default: %d)", DEFAULT_HTTP_WORKQUEUE));
         strUsage += HelpMessageOpt("-rpcservertimeout=<n>", strprintf("Timeout during HTTP requests (default: %d)", DEFAULT_HTTP_SERVER_TIMEOUT));
+        strUsage += HelpMessageOpt("-rpcforceutf8", strprintf("Replace invalid UTF-8 encoded characters with question marks in RPC response (default: %d)", 1));
     }
+
+    // TODO: append help messages somewhere else
+    // TODO: translation
+    strUsage += HelpMessageGroup("Omni options:");
+    strUsage += HelpMessageOpt("-startclean", "Clear all persistence files on startup; triggers reparsing of Omni transactions (default: 0)");
+    strUsage += HelpMessageOpt("-omnitxcache", "The maximum number of transactions in the input transaction cache (default: 500000)");
+    strUsage += HelpMessageOpt("-omniprogressfrequency", "Time in seconds after which the initial scanning progress is reported (default: 30)");
+    strUsage += HelpMessageOpt("-omniseedblockfilter", "Set skipping of blocks without Omni transactions during initial scan (default: 1)");
+    strUsage += HelpMessageOpt("-omnilogfile", "The path of the log file (default: omnicore.log)");
+    strUsage += HelpMessageOpt("-omnidebug=<category>", "Enable or disable log categories, can be \"all\" or \"none\"");
+    strUsage += HelpMessageOpt("-autocommit", "Enable or disable broadcasting of transactions, when creating transactions (default: 1)");
+    strUsage += HelpMessageOpt("-overrideforcedshutdown", "Overwrite shutdown, triggered by an alert (default: 0)");
+    strUsage += HelpMessageOpt("-omnialertallowsender", "Whitelist senders of alerts, can be \"any\")");
+    strUsage += HelpMessageOpt("-omnialertignoresender", "Ignore senders of alerts");
+    strUsage += HelpMessageOpt("-omniactivationignoresender", "Ignore senders of activations");
+    strUsage += HelpMessageOpt("-omniactivationallowsender", "Whitelist senders of activations");
+    strUsage += HelpMessageOpt("-disclaimer", "Explicitly show QT disclaimer on startup (default: 0)");
+    strUsage += HelpMessageOpt("-omniuiwalletscope", "Max. transactions to show in trade and transaction history (default: 65535)");
+    strUsage += HelpMessageOpt("-omnishowblockconsensushash", "Calculate and log the consensus hash for the specified block");
 
     return strUsage;
 }
@@ -537,8 +567,10 @@ std::string LicenseInfo()
 {
     // todo: remove urls from translations on next change
     return FormatParagraph(strprintf(_("Copyright (C) 2016-%i The FairCoin Core Developers"), COPYRIGHT_YEAR)) + "\n" +
-           "\n" +
-           FormatParagraph(_("Copyright (C) 2009-2016 The Bitcoin Core Developers")) + "\n" +
+            "\n" +
+            FormatParagraph(_("Copyright (C) 2016-2018 The Omnicore Developers")) + "\n" +
+            "\n" +
+            FormatParagraph(_("Copyright (C) 2009-2016 The Bitcoin Core Developers")) + "\n" +
            "\n" +
            FormatParagraph(_("This is experimental software.")) + "\n" +
            "\n" +
@@ -1522,6 +1554,47 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler, const str
         mempool.ReadFeeEstimates(est_filein);
     fFeeEstimatesInitialized = true;
 
+    // ********************************************************* Step 7.5: load omni core
+
+    if (!fTxIndex) {
+        // ask the user if they would like us to modify their config file for them
+        std::string msg = _("Disabled transaction index detected.\n\n"
+                            "Omni Core requires an enabled transaction index. To enable "
+                            "transaction indexing, please use the \"-txindex\" option as "
+                            "command line argument or add \"txindex=1\" to your client "
+                            "configuration file within your data directory.\n\n"
+                            "Configuration file"); // allow translation of main text body while still allowing differing config file string
+        msg += ": " + GetConfigFile().string() + "\n\n";
+        msg += _("Would you like Omni Core to attempt to update your configuration file accordingly?");
+        bool fRet = uiInterface.ThreadSafeMessageBox(msg, "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::BTN_OK | CClientUIInterface::MODAL | CClientUIInterface::BTN_ABORT);
+        if (fRet) {
+            // add txindex=1 to config file in GetConfigFile()
+            boost::filesystem::path configPathInfo = GetConfigFile();
+            FILE *fp = fopen(configPathInfo.string().c_str(), "at");
+            if (!fp) {
+                std::string failMsg = _("Unable to update configuration file at");
+                failMsg += ":\n" + GetConfigFile().string() + "\n\n";
+                failMsg += _("The file may be write protected or you may not have the required permissions to edit it.\n");
+                failMsg += _("Please add txindex=1 to your configuration file manually.\n\nOmni Core will now shutdown.");
+                return InitError(failMsg);
+            }
+            fprintf(fp, "\ntxindex=1\n");
+            fflush(fp);
+            fclose(fp);
+            std::string strUpdated = _(
+                    "Your configuration file has been updated.\n\n"
+                    "Omni Core will now shutdown - please restart the client for your new configuration to take effect.");
+            uiInterface.ThreadSafeMessageBox(strUpdated, "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::BTN_OK | CClientUIInterface::MODAL);
+            return false;
+        } else {
+            return InitError(_("Please add txindex=1 to your configuration file manually.\n\nOmni Core will now shutdown."));
+        }
+    }
+
+    uiInterface.InitMessage(_("Parsing Omni Layer transactions..."));
+
+    mastercore_init();
+
     // ********************************************************* Step 8: load wallet
 #ifdef ENABLE_WALLET
     if (fDisableWallet) {
@@ -1700,6 +1773,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler, const str
 #else // ENABLE_WALLET
     LogPrintf("No wallet support compiled in!\n");
 #endif // !ENABLE_WALLET
+
+    // Omni Core code should be initialized and wallet should now be loaded, perform an initial populat$
+    CheckWalletUpdate();
 
     // ********************************************************* Step 9: data directory maintenance
 

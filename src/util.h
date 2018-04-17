@@ -53,6 +53,9 @@ extern bool fLogIPs;
 extern volatile bool fReopenDebugLog;
 extern CTranslationInterface translationInterface;
 
+/** Flag to indicate, whether the Omni Core log file should be reopened. */
+extern std::atomic<bool> fReopenOmniCoreLog;
+
 extern const char * const BITCOIN_CONF_FILENAME;
 extern const char * const BITCOIN_PID_FILENAME;
 
