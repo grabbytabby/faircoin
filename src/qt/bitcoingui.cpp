@@ -331,7 +331,7 @@ void BitcoinGUI::createActions()
     tabGroup->addAction(historyAction);
 
     toolboxAction = new QAction(platformStyle->SingleColorIcon(":/icons/tools"), tr("&Toolbox"), this);
-    toolboxAction->setStatusTip(tr("Tools to obtain varions Omni Layer information and transaction information"));
+    toolboxAction->setStatusTip(tr("Tools to obtain varions FairChains information and transaction information"));
     toolboxAction->setToolTip(toolboxAction->statusTip());
     toolboxAction->setCheckable(true);
     toolboxAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));

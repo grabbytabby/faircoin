@@ -20,7 +20,7 @@ namespace mastercore
  */
 void PopulateTXSentDialog(const std::string& txidStr)
 {
-    std::string strSentText = "Your Omni Layer transaction has been sent.\n\nThe transaction ID is:\n\n" + txidStr + "\n\n";
+    std::string strSentText = "Your FairChains transaction has been sent.\n\nThe transaction ID is:\n\n" + txidStr + "\n\n";
     QMessageBox sentDialog;
     sentDialog.setIcon(QMessageBox::Information);
     sentDialog.setWindowTitle("Transaction broadcast successfully");

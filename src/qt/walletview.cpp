@@ -71,8 +71,8 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     transactionsPage = new QWidget(this);
     QVBoxLayout *txvbox = new QVBoxLayout();
     txTabHolder = new QTabWidget();
-    txTabHolder->addTab(mpTXTab,tr("Omni Layer"));
-    txTabHolder->addTab(bitcoinTXTab,tr("Bitcoin"));
+    txTabHolder->addTab(mpTXTab,tr("FairChains"));
+    txTabHolder->addTab(bitcoinTXTab,tr("FairCoin"));
     txvbox->addWidget(txTabHolder);
     transactionsPage->setLayout(txvbox);
 
@@ -88,8 +88,8 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     sendCoinsTab = new SendCoinsDialog(platformStyle);
     sendMPTab = new SendMPDialog(platformStyle);
     sendTabHolder = new QTabWidget();
-    sendTabHolder->addTab(sendMPTab,tr("Omni Layer"));
-    sendTabHolder->addTab(sendCoinsTab,tr("Bitcoin"));
+    sendTabHolder->addTab(sendMPTab,tr("FairChains"));
+    sendTabHolder->addTab(sendCoinsTab,tr("FairCoin"));
     svbox->addWidget(sendTabHolder);
     sendCoinsPage->setLayout(svbox);
 
@@ -102,8 +102,8 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     cancelTab = new MetaDExCancelDialog();
     QTabWidget *exTabHolder = new QTabWidget();
     tradeHistoryTab = new TradeHistoryDialog;
-    // exTabHolder->addTab(new QWidget(),tr("Trade Bitcoin/Mastercoin")); not yet implemented
-    exTabHolder->addTab(metaDExTab,tr("Trade Omni Layer Properties"));
+    // exTabHolder->addTab(new QWidget(),tr("Trade FairCoin/Mastercoin")); not yet implemented
+    exTabHolder->addTab(metaDExTab,tr("Trade FairChains Properties"));
     exTabHolder->addTab(tradeHistoryTab,tr("Trade History"));
     exTabHolder->addTab(cancelTab,tr("Cancel Orders"));
     exvbox->addWidget(exTabHolder);
