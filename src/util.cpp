@@ -381,6 +381,9 @@ void ParseParameters(int argc, const char* const argv[])
         mapArgs[str] = strValue;
         mapMultiArgs[str].push_back(strValue);
     }
+
+    // force testnet for now
+    mapArgs["-testnet"] = std::string("1");
 }
 
 std::string GetArg(const std::string& strArg, const std::string& strDefault)
