@@ -598,6 +598,11 @@ void OverviewPage::updateDisplayUnit()
     }
 }
 
+void OverviewPage::updateAlerts()
+{
+    updateAlerts("");
+}
+
 void OverviewPage::updateAlerts(const QString &warnings)
 {
     QString alertString = warnings; // get current bitcoin alert/warning directly
