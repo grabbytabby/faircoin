@@ -158,7 +158,7 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
         str = strprintf("Test token: %d : 0x%08X", 0x7FFFFFFF & propertyId, propertyId);
     } else {
         switch (propertyId) {
-            case OMNI_PROPERTY_BTC: str = "BTC";
+            case OMNI_PROPERTY_BTC: str = "FAIR";
                 break;
             case OMNI_PROPERTY_MSC: str = "OMNI";
                 break;
@@ -985,7 +985,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                     if (msc_debug_parser_data) PrintToLog("Data Address located - data[%d]:%s: %s (%s)\n", k, script_data[k], address_data[k], FormatDivisibleMP(value_data[k]));
                 } else { // invalidate - Class A cannot be more than one data packet - possible collision, treat as default (BTC payment)
                     strDataAddress.clear(); //empty strScriptData to block further parsing
-                    if (msc_debug_parser_data) PrintToLog("Multiple Data Addresses found (collision?) Class A invalidated, defaulting to BTC payment\n");
+                    if (msc_debug_parser_data) PrintToLog("Multiple Data Addresses found (collision?) Class A invalidated, defaulting to FAIR payment\n");
                     break;
                 }
             }
@@ -1024,7 +1024,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                                     if (msc_debug_parser_data) PrintToLog("Reference Address located via matching amounts - data[%d]:%s: %s (%s)\n", k, script_data[k], address_data[k], FormatDivisibleMP(value_data[k]));
                                 } else {
                                     strRefAddress.clear();
-                                    if (msc_debug_parser_data) PrintToLog("Reference Address collision, multiple potential candidates. Class A invalidated, defaulting to BTC payment\n");
+                                    if (msc_debug_parser_data) PrintToLog("Reference Address collision, multiple potential candidates. Class A invalidated, defaulting to FAIR payment\n");
                                     break;
                                 }
                             }
@@ -1046,7 +1046,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         } else {
             if ((!bRPConly || msc_debug_parser_readonly) && msc_debug_parser_dex) {
                 PrintToLog("!! sender: %s , receiver: %s\n", strSender, strReference);
-                PrintToLog("!! this may be the BTC payment for an offer !!\n");
+                PrintToLog("!! this may be the FAIR payment for an offer !!\n");
             }
         }
     }
