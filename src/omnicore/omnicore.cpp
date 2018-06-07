@@ -95,11 +95,11 @@ using namespace mastercore;
 
 CCriticalSection cs_tally;
 
-static string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+static string exodus_address = "fchainsdfKtYkbifpTAvrSn2Bnvt4Rhdw4";
 
-static const string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-static const string exodus_testnet = "mpexoDuSkGGqvqrkrjiFng38QPkJQVFyqv";
-static const string getmoney_testnet = "moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP";
+static const string exodus_mainnet = "fchainsdfKtYkbifpTAvrSn2Bnvt4Rhdw4";
+static const string exodus_testnet = "mtest4kEiWyJGEBZFNAbGeqBt931dAetwC";
+static const string getmoney_testnet = "unused";
 
 static int nWaterlineBlock = 0;
 
@@ -160,10 +160,10 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
         switch (propertyId) {
             case OMNI_PROPERTY_BTC: str = "FAIR";
                 break;
-            case OMNI_PROPERTY_MSC: str = "OMNI";
-                break;
-            case OMNI_PROPERTY_TMSC: str = "TOMNI";
-                break;
+//            case OMNI_PROPERTY_MSC: str = "OMNI";
+//                break;
+//            case OMNI_PROPERTY_TMSC: str = "TOMNI";
+//                break;
             default:
                 str = strprintf("SP token: %d", propertyId);
         }
@@ -404,6 +404,8 @@ bool mastercore::isAddressFrozen(const std::string& address, uint32_t propertyId
 
 std::string mastercore::getTokenLabel(uint32_t propertyId)
 {
+    return strprintf(" SPT#%d", propertyId);;
+#if 0
     std::string tokenStr;
     if (propertyId < 3) {
         if (propertyId == 1) {
@@ -415,6 +417,7 @@ std::string mastercore::getTokenLabel(uint32_t propertyId)
         tokenStr = strprintf(" SPT#%d", propertyId);
     }
     return tokenStr;
+#endif
 }
 
 // get total tokens for a property
@@ -664,29 +667,29 @@ static bool TXExodusFundraiser(const CTransaction& tx, const std::string& sender
  */
 int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 {
+    const CConsensusParams& params = ConsensusParams();
+    if (nBlock < params.GENESIS_BLOCK)
+        return NO_MARKER;
+
     bool hasExodus = false;
     bool hasMultisig = false;
     bool hasOpReturn = false;
-    bool hasMoney = false;
+    //bool hasMoney = false;
 
     /* Fast Search
      * Perform a string comparison on hex for each scriptPubKey & look directly for Exodus hash160 bytes or omni marker bytes
      * This allows to drop non-Omni transactions with less work
      */
-    std::string strClassC = "6f6d6e69";
-    std::string strClassAB = "76a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac";
+    static const std::string strClassC = "6f6d6e69";
+    static const std::string strClassB = "76a914811d35577af11f709b3962931bcb67c679d6f47c88ac";
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
         std::string strSPB = HexStr(output.scriptPubKey.begin(), output.scriptPubKey.end());
-        if (strSPB != strClassAB) { // not an exodus marker
-            if (nBlock < 395000) { // class C not enabled yet, no need to search for marker bytes
-                continue;
-            } else {
-                if (strSPB.find(strClassC) != std::string::npos) {
-                    examineClosely = true;
-                    break;
-                }
+        if (strSPB != strClassB) { // not an OMNI marker
+            if (strSPB.find(strClassC) != std::string::npos) {
+                examineClosely = true;
+                break;
             }
         } else {
             examineClosely = true;
@@ -719,9 +722,9 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
                 if (address == ExodusAddress()) {
                     hasExodus = true;
                 }
-                if (address == ExodusCrowdsaleAddress(nBlock)) {
-                    hasMoney = true;
-                }
+//                if (address == ExodusCrowdsaleAddress(nBlock)) {
+//                    hasMoney = true;
+//                }
             }
         }
         if (outType == TX_MULTISIG) {
@@ -753,10 +756,11 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     if (hasExodus && hasMultisig) {
         return OMNI_CLASS_B;
     }
+#if 0 // no class a transactions in the FairCoin network
     if (hasExodus || hasMoney) {
         return OMNI_CLASS_A;
     }
-
+#endif
     return NO_MARKER;
 }
 
@@ -2345,10 +2349,10 @@ int mastercore_init()
     msc_initial_scan(nWaterlineBlock);
 
     // display Exodus balance
-    int64_t exodus_balance = getMPbalance(exodus_address, OMNI_PROPERTY_MSC, BALANCE);
-    PrintToLog("Exodus balance after initialization: %s\n", FormatDivisibleMP(exodus_balance));
-
-    PrintToConsole("Exodus balance: %s OMNI\n", FormatDivisibleMP(exodus_balance));
+//    int64_t exodus_balance = getMPbalance(exodus_address, OMNI_PROPERTY_MSC, BALANCE);
+//    PrintToLog("Exodus balance after initialization: %s\n", FormatDivisibleMP(exodus_balance));
+//
+//    PrintToConsole("Exodus balance: %s OMNI\n", FormatDivisibleMP(exodus_balance));
     PrintToConsole("Omni Core initialization completed\n");
 
     return 0;
@@ -4006,7 +4010,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
     }
 
     // calculate devmsc as of this block and update the Exodus' balance
-    devmsc = calculate_and_update_devmsc(pBlockIndex->GetBlockTime(), nBlockNow);
+//    devmsc = calculate_and_update_devmsc(pBlockIndex->GetBlockTime(), nBlockNow);
 
     if (msc_debug_exo) {
         int64_t balance = getMPbalance(exodus_address, OMNI_PROPERTY_MSC, BALANCE);
@@ -4069,10 +4073,10 @@ int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const * pBlockIndex)
  * Returns the Exodus address.
  *
  * Main network:
- *   1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P
+ *   fchainsdfKtYkbifpTAvrSn2Bnvt4Rhdw4
  *
  * Test network:
- *   mpexoDuSkGGqvqrkrjiFng38QPkJQVFyqv
+ *   mtest4kEiWyJGEBZFNAbGeqBt931dAetwC
  *
  * @return The Exodus address
  */
@@ -4089,6 +4093,7 @@ const CBitcoinAddress ExodusAddress()
 
 /**
  * Returns the Exodus crowdsale address.
+ * NOT used in the FairCoin network.
  *
  * Main network:
  *   1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P

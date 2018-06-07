@@ -66,22 +66,22 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
     PrintToConsole("Loading smart property database: %s\n", status.ToString());
 
     // special cases for constant SPs OMNI and TOMNI
-    implied_omni.issuer = ExodusAddress().ToString();
-    implied_omni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
-    implied_omni.num_tokens = 700000;
-    implied_omni.category = "N/A";
-    implied_omni.subcategory = "N/A";
-    implied_omni.name = "Omni";
-    implied_omni.url = "http://www.omnilayer.org";
-    implied_omni.data = "Omni serve as the binding between Bitcoin, smart properties and contracts created on the Omni Layer.";
-    implied_tomni.issuer = ExodusAddress().ToString();
-    implied_tomni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
-    implied_tomni.num_tokens = 700000;
-    implied_tomni.category = "N/A";
-    implied_tomni.subcategory = "N/A";
-    implied_tomni.name = "Test Omni";
-    implied_tomni.url = "http://www.omnilayer.org";
-    implied_tomni.data = "Test Omni serve as the binding between Bitcoin, smart properties and contracts created on the Omni Layer.";
+//    implied_omni.issuer = ExodusAddress().ToString();
+//    implied_omni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
+//    implied_omni.num_tokens = 700000;
+//    implied_omni.category = "N/A";
+//    implied_omni.subcategory = "N/A";
+//    implied_omni.name = "Omni";
+//    implied_omni.url = "http://www.omnilayer.org";
+//    implied_omni.data = "Omni serve as the binding between Bitcoin, smart properties and contracts created on the Omni Layer.";
+//    implied_tomni.issuer = ExodusAddress().ToString();
+//    implied_tomni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
+//    implied_tomni.num_tokens = 700000;
+//    implied_tomni.category = "N/A";
+//    implied_tomni.subcategory = "N/A";
+//    implied_tomni.name = "Test Omni";
+//    implied_tomni.url = "http://www.omnilayer.org";
+//    implied_tomni.data = "Test Omni serve as the binding between Bitcoin, smart properties and contracts created on the Omni Layer.";
 
     init();
 }
@@ -126,9 +126,9 @@ uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
 bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
 {
     // cannot update implied SP
-    if (OMNI_PROPERTY_MSC == propertyId || OMNI_PROPERTY_TMSC == propertyId) {
-        return false;
-    }
+//    if (OMNI_PROPERTY_MSC == propertyId || OMNI_PROPERTY_TMSC == propertyId) {
+//        return false;
+//    }
 
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
@@ -230,13 +230,13 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
 bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 {
     // special cases for constant SPs MSC and TMSC
-    if (OMNI_PROPERTY_MSC == propertyId) {
-        info = implied_omni;
-        return true;
-    } else if (OMNI_PROPERTY_TMSC == propertyId) {
-        info = implied_tomni;
-        return true;
-    }
+//    if (OMNI_PROPERTY_MSC == propertyId) {
+//        info = implied_omni;
+//        return true;
+//    } else if (OMNI_PROPERTY_TMSC == propertyId) {
+//        info = implied_tomni;
+//        return true;
+//    }
 
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
@@ -267,9 +267,9 @@ bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 bool CMPSPInfo::hasSP(uint32_t propertyId) const
 {
     // Special cases for constant SPs MSC and TMSC
-    if (OMNI_PROPERTY_MSC == propertyId || OMNI_PROPERTY_TMSC == propertyId) {
-        return true;
-    }
+//    if (OMNI_PROPERTY_MSC == propertyId || OMNI_PROPERTY_TMSC == propertyId) {
+//        return true;
+//    }
 
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
@@ -441,15 +441,15 @@ bool CMPSPInfo::getWatermark(uint256& watermark) const
 void CMPSPInfo::printAll() const
 {
     // print off the hard coded MSC and TMSC entries
-    for (uint32_t idx = OMNI_PROPERTY_MSC; idx <= OMNI_PROPERTY_TMSC; idx++) {
-        Entry info;
-        PrintToConsole("%10d => ", idx);
-        if (getSP(idx, info)) {
-            info.print();
-        } else {
-            PrintToConsole("<Internal Error on implicit SP>\n");
-        }
-    }
+//    for (uint32_t idx = OMNI_PROPERTY_MSC; idx <= OMNI_PROPERTY_TMSC; idx++) {
+//        Entry info;
+//        PrintToConsole("%10d => ", idx);
+//        if (getSP(idx, info)) {
+//            info.print();
+//        } else {
+//            PrintToConsole("<Internal Error on implicit SP>\n");
+//        }
+//    }
 
     leveldb::Iterator* iter = NewIterator();
 

@@ -1113,6 +1113,8 @@ int CMPTransaction::logicMath_SendToOwners()
         return (PKT_ERROR_STO -26);
     }
 
+    //TODO: not applicable for FairCoin
+#if 0
     // determine which property the fee will be paid in
     uint32_t feeProperty = isTestEcosystemProperty(property) ? OMNI_PROPERTY_TMSC : OMNI_PROPERTY_MSC;
     int64_t feePerOwner = (version == MP_TX_PKT_V0) ? TRANSFER_FEE_PER_OWNER : TRANSFER_FEE_PER_OWNER_V1;
@@ -1183,6 +1185,7 @@ int CMPTransaction::logicMath_SendToOwners()
 
     // Number of tokens has changed, update fee distribution thresholds
     if (version == MP_TX_PKT_V0) NotifyTotalTokensChanged(OMNI_PROPERTY_MSC, block); // fee was burned
+#endif
 
     return 0;
 }
