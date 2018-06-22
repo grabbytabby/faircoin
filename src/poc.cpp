@@ -502,49 +502,6 @@ bool CreateSumPublicNoncesOthers(CSchnorrPubKey &sumPublicNoncesOthers, const ui
     return true;
 }
 
-bool VerifyNoncePoolEntry(const int &nPoolOffset)
-{
-    CHashWriter hasher(SER_GETHASH, 0);
-
-    if (!nCvnNodeId) {
-        LogPrintf("%s : CVN node not initialised\n", __func__);
-        return false;
-    }
-
-    CvnMapType::iterator cvnInfoIter = mapCVNs.find(nCvnNodeId);
-
-    if (cvnInfoIter == mapCVNs.end()) {
-        LogPrintf("%s : # %d could not find CvnInfo for signer ID 0x%08x\n", __func__, nPoolOffset, nCvnNodeId);
-        return false;
-    }
-
-    CSchnorrPubKey dummySumPublicNoncesOthers = cvnInfoIter->second.pubKey;
-    hasher << dummySumPublicNoncesOthers;
-
-    uint256 hashToSign = hasher.GetHash();
-    CSchnorrSig signature;
-
-    if (GetArg("-cvn", "") == "fasito") {
-#ifdef USE_FASITO
-        if (!fasito.fLoggedIn) {
-            LogPrint("cvn", "%s : not logged into Fasito. Cannot create partial signature.\n", __func__);
-            return false;
-        }
-
-        if (!CvnSignPartialWithFasito(hashToSign, fasito.nCVNKeyIndex, dummySumPublicNoncesOthers, signature, nPoolOffset))
-            return false;
-#else
-        LogPrintf("%s : this wallet was not compiled with Fasito support.\n", __func__);
-        return false;
-#endif
-    } else {
-        if (!CvnSignPartialWithKey(hashToSign, cvnPrivKey, dummySumPublicNoncesOthers, signature, nPoolOffset))
-            return false;
-    }
-
-    return VerifyPartialSignature(hashToSign, signature, dummySumPublicNoncesOthers, dummySumPublicNoncesOthers);
-}
-
 static void UpdateHashWithMissingIDs(CHashWriter &hasher, const vector<uint32_t> &vMissingSignerIds)
 {
     if (vMissingSignerIds.empty())
@@ -2193,6 +2150,49 @@ static bool SendCVNSignature(POCStateHolder &s, const vector<uint32_t> &vMissing
 
     s.commonRxs.push_back(msg.signature.GetRx());
     return true;
+}
+
+static bool VerifyNoncePoolEntry(const int &nPoolOffset)
+{
+    CHashWriter hasher(SER_GETHASH, 0);
+
+    if (!nCvnNodeId) {
+        LogPrintf("%s : CVN node not initialised\n", __func__);
+        return false;
+    }
+
+    CvnMapType::iterator cvnInfoIter = mapCVNs.find(nCvnNodeId);
+
+    if (cvnInfoIter == mapCVNs.end()) {
+        LogPrintf("%s : # %d could not find CvnInfo for signer ID 0x%08x\n", __func__, nPoolOffset, nCvnNodeId);
+        return false;
+    }
+
+    CSchnorrPubKey dummySumPublicNoncesOthers = cvnInfoIter->second.pubKey;
+    hasher << dummySumPublicNoncesOthers;
+
+    uint256 hashToSign = hasher.GetHash();
+    CSchnorrSig signature;
+
+    if (GetArg("-cvn", "") == "fasito") {
+#ifdef USE_FASITO
+        if (!fasito.fLoggedIn) {
+            LogPrint("cvn", "%s : not logged into Fasito. Cannot create partial signature.\n", __func__);
+            return false;
+        }
+
+        if (!CvnSignPartialWithFasito(hashToSign, fasito.nCVNKeyIndex, dummySumPublicNoncesOthers, signature, nPoolOffset))
+            return false;
+#else
+        LogPrintf("%s : this wallet was not compiled with Fasito support.\n", __func__);
+        return false;
+#endif
+    } else {
+        if (!CvnSignPartialWithKey(hashToSign, cvnPrivKey, dummySumPublicNoncesOthers, signature, nPoolOffset))
+            return false;
+    }
+
+    return VerifyPartialSignature(hashToSign, signature, dummySumPublicNoncesOthers, dummySumPublicNoncesOthers);
 }
 
 static bool SetUpNoncePool()
