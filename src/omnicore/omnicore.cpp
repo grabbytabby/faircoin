@@ -1434,7 +1434,7 @@ static int msc_initial_scan(int nFirstBlock)
     ProgressReporter progressReporter(chainActive[nFirstBlock], chainActive[nLastBlock]);
 
     // check if using seed block filter should be disabled
-    bool seedBlockFilterEnabled = GetBoolArg("-omniseedblockfilter", true);
+    bool seedBlockFilterEnabled = GetBoolArg("-omniseedblockfilter", false);
 
     for (nBlock = nFirstBlock; nBlock <= nLastBlock; ++nBlock)
     {
