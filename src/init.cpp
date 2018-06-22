@@ -139,7 +139,7 @@ extern int CheckWalletUpdate(bool forceUpdate = false);
 // shutdown thing.
 //
 
-volatile bool fRequestShutdown = false;
+std::atomic<bool> fRequestShutdown(false);
 
 void StartShutdown()
 {

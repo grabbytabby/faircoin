@@ -68,6 +68,8 @@ MapSigAdmin mapAdminSigs;
 static vector<CSchnorrPrivNonce> vNoncePrivate;
 static secp256k1_context *secp256k1_context_none = NULL;
 
+bool static CvnSignPartialWithKey(const uint256& hashToSign, const CKey& cvnPrivKey, const CSchnorrPubKey& sumPublicNoncesOthers, CSchnorrSig& signature, const int nPoolOffset);
+
 const char *pocStateNames[] = {
         "INIT",
         "WAITING_FOR_BLOCK_PROPAGATION",
@@ -498,6 +500,49 @@ bool CreateSumPublicNoncesOthers(CSchnorrPubKey &sumPublicNoncesOthers, const ui
     }
 
     return true;
+}
+
+bool VerifyNoncePoolEntry(const int &nPoolOffset)
+{
+    CHashWriter hasher(SER_GETHASH, 0);
+
+    if (!nCvnNodeId) {
+        LogPrintf("%s : CVN node not initialised\n", __func__);
+        return false;
+    }
+
+    CvnMapType::iterator cvnInfoIter = mapCVNs.find(nCvnNodeId);
+
+    if (cvnInfoIter == mapCVNs.end()) {
+        LogPrintf("%s : # %d could not find CvnInfo for signer ID 0x%08x\n", __func__, nPoolOffset, nCvnNodeId);
+        return false;
+    }
+
+    CSchnorrPubKey dummySumPublicNoncesOthers = cvnInfoIter->second.pubKey;
+    hasher << dummySumPublicNoncesOthers;
+
+    uint256 hashToSign = hasher.GetHash();
+    CSchnorrSig signature;
+
+    if (GetArg("-cvn", "") == "fasito") {
+#ifdef USE_FASITO
+        if (!fasito.fLoggedIn) {
+            LogPrint("cvn", "%s : not logged into Fasito. Cannot create partial signature.\n", __func__);
+            return false;
+        }
+
+        if (!CvnSignPartialWithFasito(hashToSign, fasito.nCVNKeyIndex, dummySumPublicNoncesOthers, signature, nPoolOffset))
+            return false;
+#else
+        LogPrintf("%s : this wallet was not compiled with Fasito support.\n", __func__);
+        return false;
+#endif
+    } else {
+        if (!CvnSignPartialWithKey(hashToSign, cvnPrivKey, dummySumPublicNoncesOthers, signature, nPoolOffset))
+            return false;
+    }
+
+    return VerifyPartialSignature(hashToSign, signature, dummySumPublicNoncesOthers, dummySumPublicNoncesOthers);
 }
 
 static void UpdateHashWithMissingIDs(CHashWriter &hasher, const vector<uint32_t> &vMissingSignerIds)
@@ -2180,18 +2225,10 @@ static bool SetUpNoncePool()
         return false;
     }
 
-    /* to verify the entries of the current nonce pool we create a partial
-     * signature with each nonce pair in the pool
-     */
-    uint256 hashData;
-    CCvnPartialSignatureUnsinged signature;
-    vector<uint32_t> vMissingSignerIds;
     int nPoolSize = pool.vPublicNonces.size();
-    GetStrongRandBytes(&hashData.begin()[0], 32);
-
     LogPrintf("Verifying nonce pool with %d entires...", nPoolSize);
     for (int i = 0 ; i < nPoolSize ; i++) {
-        if (!CvnSignPartial(hashData, signature, nCvnNodeId, nCvnNodeId, vMissingSignerIds, i)) {
+        if (!VerifyNoncePoolEntry(i)) {
             LogPrintf("%s : nonce pool is invalid. Re-creating it.\n", __func__);
             return false;
         }
