@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef FAIRCOIN_CVN_H
-#define FAIRCOIN_CVN_H
+#ifndef FAIRCOIN_CERT_H
+#define FAIRCOIN_CERT_H
 
 #include "key.h"
 
@@ -15,4 +15,4 @@ extern CSchnorrPubKey adminPubKey;
 extern uint32_t InitCVNWithCertificate(const string &strFasitoPassword);
 extern uint32_t InitChainAdminWithCertificate(const string& strPassword, string &strError);
 
-#endif // FAIRCOIN_CVN_H
+#endif // FAIRCOIN_CERT_H
