@@ -95,14 +95,14 @@ std::vector<ConsensusCheckpoint> CConsensusParams::GetCheckpoints() const
  */
 std::vector<ConsensusCheckpoint> CMainConsensusParams::GetCheckpoints() const
 {
+    //TODO: add checkpoints
+#if 0
     // block height, block hash and consensus hash
     const ConsensusCheckpoint vCheckpoints[] = {
         { 250000, uint256S("000000000000003887df1f29024b06fc2200b55f8af8f35453d7be294df2d214"),
                   uint256S("c2e1e0f3cf3c49d8ee08bd45ad39be27eb400041d6288864ee144892449c97df") },
     };
 
-    //TODO: add checkpoints
-#if 0
     const size_t nSize = sizeof(vCheckpoints) / sizeof(vCheckpoints[0]);
 
     return std::vector<ConsensusCheckpoint>(vCheckpoints, vCheckpoints + nSize);
@@ -116,37 +116,37 @@ std::vector<ConsensusCheckpoint> CMainConsensusParams::GetCheckpoints() const
 CMainConsensusParams::CMainConsensusParams()
 {
     // Exodus related:
-    exodusBonusPerWeek = 0.10;
+    exodusBonusPerWeek = 0.0;
     exodusDeadline = 1377993600;
-    exodusReward = 100;
-    GENESIS_BLOCK = 249498;
-    LAST_EXODUS_BLOCK = 255365;
+    exodusReward = 0;
+    GENESIS_BLOCK = 177177;
+    LAST_EXODUS_BLOCK = INT_MAX; // no initial crowdsale in FairCoin
     // Notice range for feature activations:
-    MIN_ACTIVATION_BLOCKS = 2048;  // ~2 weeks
-    MAX_ACTIVATION_BLOCKS = 12288; // ~12 weeks
+    MIN_ACTIVATION_BLOCKS = 6144;  // ~2 weeks
+    MAX_ACTIVATION_BLOCKS = 36864; // ~12 weeks
     // Waiting period for enabling freezing
-    OMNI_FREEZE_WAIT_PERIOD = 4096; // ~4 weeks
+    OMNI_FREEZE_WAIT_PERIOD = 12288; // ~4 weeks
     // Script related:
     PUBKEYHASH_BLOCK = 0;
-    SCRIPTHASH_BLOCK = 322000;
+    SCRIPTHASH_BLOCK = 177177;
     MULTISIG_BLOCK = 0;
-    NULLDATA_BLOCK = 395000;
+    NULLDATA_BLOCK = 177177;
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
-    MSC_SEND_BLOCK = 249498;
-    MSC_DEX_BLOCK = 290630;
-    MSC_SP_BLOCK = 297110;
-    MSC_MANUALSP_BLOCK = 323230;
-    MSC_STO_BLOCK = 342650;
-    MSC_METADEX_BLOCK = 400000;
-    MSC_SEND_ALL_BLOCK = 395000;
-    MSC_BET_BLOCK = 999999;
-    MSC_STOV1_BLOCK = 999999;
+    MSC_SEND_BLOCK = 177177;
+    MSC_DEX_BLOCK = 177177;
+    MSC_SP_BLOCK = 177177;
+    MSC_MANUALSP_BLOCK = 177177;
+    MSC_STO_BLOCK = 177177;
+    MSC_METADEX_BLOCK = 177177;
+    MSC_SEND_ALL_BLOCK = 177177;
+    MSC_BET_BLOCK = INT_MAX;
+    MSC_STOV1_BLOCK = INT_MAX;
     // Other feature activations:
-    GRANTEFFECTS_FEATURE_BLOCK = 394500;
-    DEXMATH_FEATURE_BLOCK = 395000;
-    SPCROWDCROSSOVER_FEATURE_BLOCK = 395000;
-    TRADEALLPAIRS_FEATURE_BLOCK = 438500;
+    GRANTEFFECTS_FEATURE_BLOCK = 0;
+    DEXMATH_FEATURE_BLOCK = 0;
+    SPCROWDCROSSOVER_FEATURE_BLOCK = 0;
+    TRADEALLPAIRS_FEATURE_BLOCK = 0;
     FEES_FEATURE_BLOCK = 999999;
     FREEZENOTICE_FEATURE_BLOCK = 999999;
 }
@@ -161,10 +161,10 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     exodusDeadline = 1377993600;
     exodusReward = 100;
     GENESIS_BLOCK = 50425;
-    LAST_EXODUS_BLOCK = 0; // no initial crowdsale in FairCoin
+    LAST_EXODUS_BLOCK = INT_MAX; // no initial crowdsale in FairCoin
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;
-    MAX_ACTIVATION_BLOCKS = 999999;
+    MAX_ACTIVATION_BLOCKS = INT_MAX;
     // Waiting period for enabling freezing
     OMNI_FREEZE_WAIT_PERIOD = 0;
     // Script related:
@@ -181,7 +181,7 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_STO_BLOCK = 0;
     MSC_METADEX_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
-    MSC_BET_BLOCK = 999999;
+    MSC_BET_BLOCK = INT_MAX;
     MSC_STOV1_BLOCK = 0;
     // Other feature activations:
     GRANTEFFECTS_FEATURE_BLOCK = 0;
@@ -233,12 +233,55 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     FREEZENOTICE_FEATURE_BLOCK = 999999;
 }
 
+/**
+ * Constructor for custom net consensus parameters.
+ */
+CCustomConsensusParams::CCustomConsensusParams()
+{
+    // Exodus related:
+    exodusBonusPerWeek = 0.0;
+    exodusDeadline = 0;
+    exodusReward = 0;
+    GENESIS_BLOCK = 1;
+    LAST_EXODUS_BLOCK = INT_MAX; // no initial crowdsale in FairCoin
+    // Notice range for feature activations:
+    MIN_ACTIVATION_BLOCKS = 6144;  // ~2 weeks
+    MAX_ACTIVATION_BLOCKS = 36864; // ~12 weeks
+    // Waiting period for enabling freezing
+    OMNI_FREEZE_WAIT_PERIOD = 12288; // ~4 weeks
+    // Script related:
+    PUBKEYHASH_BLOCK = 0;
+    SCRIPTHASH_BLOCK = 1;
+    MULTISIG_BLOCK = 0;
+    NULLDATA_BLOCK = 1;
+    // Transaction restrictions:
+    MSC_ALERT_BLOCK = 0;
+    MSC_SEND_BLOCK = 1;
+    MSC_DEX_BLOCK = 1;
+    MSC_SP_BLOCK = 1;
+    MSC_MANUALSP_BLOCK = 1;
+    MSC_STO_BLOCK = 1;
+    MSC_METADEX_BLOCK = 1;
+    MSC_SEND_ALL_BLOCK = 1;
+    MSC_BET_BLOCK = INT_MAX;
+    MSC_STOV1_BLOCK = INT_MAX;
+    // Other feature activations:
+    GRANTEFFECTS_FEATURE_BLOCK = 0;
+    DEXMATH_FEATURE_BLOCK = 0;
+    SPCROWDCROSSOVER_FEATURE_BLOCK = 0;
+    TRADEALLPAIRS_FEATURE_BLOCK = 0;
+    FEES_FEATURE_BLOCK = 999999;
+    FREEZENOTICE_FEATURE_BLOCK = 999999;
+}
+
 //! Consensus parameters for mainnet
 static CMainConsensusParams mainConsensusParams;
 //! Consensus parameters for testnet
 static CTestNetConsensusParams testNetConsensusParams;
 //! Consensus parameters for regtest mode
 static CRegTestConsensusParams regTestConsensusParams;
+//! Consensus parameters for custom net
+static CCustomConsensusParams customConsensusParams;
 
 /**
  * Returns consensus parameters for the given network.
@@ -253,6 +296,9 @@ CConsensusParams& ConsensusParams(const std::string& network)
     }
     if (network == "regtest") {
         return regTestConsensusParams;
+    }
+    if (network == "custom") {
+        return customConsensusParams;
     }
     // Fallback:
     return mainConsensusParams;
@@ -286,6 +332,7 @@ void ResetConsensusParams()
     mainConsensusParams = CMainConsensusParams();
     testNetConsensusParams = CTestNetConsensusParams();
     regTestConsensusParams = CRegTestConsensusParams();
+    customConsensusParams = CCustomConsensusParams();
 }
 
 /**

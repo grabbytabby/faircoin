@@ -184,6 +184,17 @@ public:
     virtual ~CRegTestConsensusParams() {}
 };
 
+/** Consensus parameters for custom net.
+ */
+class CCustomConsensusParams: public CConsensusParams
+{
+public:
+    /** Constructor for mainnet consensus parameters. */
+    CCustomConsensusParams();
+    /** Destructor. */
+    virtual ~CCustomConsensusParams() {}
+};
+
 /** Returns consensus parameters for the given network. */
 CConsensusParams& ConsensusParams(const std::string& network);
 /** Returns currently active consensus parameter. */

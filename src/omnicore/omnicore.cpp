@@ -515,6 +515,7 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
 // 10) need a locking mechanism between Core & Qt -- to retrieve the tally, for instance, this and similar to this: LOCK(wallet->cs_wallet);
 //
 
+#if 0
 /**
  * Calculates and updates the "development mastercoins".
  *
@@ -569,6 +570,7 @@ static int64_t calculate_and_update_devmsc(unsigned int nTime, int block)
 
     return exodus_delta;
 }
+#endif
 
 uint32_t mastercore::GetNextPropertyId(bool maineco)
 {
