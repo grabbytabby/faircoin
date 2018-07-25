@@ -75,6 +75,22 @@ public:
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
     const CCheckpointData& Checkpoints() const { return checkpointData; }
+    void SetMessageStart(const uint32_t messageStart) {
+        pchMessageStart[0] = (messageStart >> 24) & 0xff;
+        pchMessageStart[1] = (messageStart >> 16) & 0xff;
+        pchMessageStart[2] = (messageStart >>  8) & 0xff;
+        pchMessageStart[3] = (messageStart >>  0) & 0xff;
+    }
+    void SetAlertKey(std::vector<unsigned char>& key) { vAlertPubKey = key; }
+    void SetDefaultPort(const int port) { nDefaultPort = port; }
+    void SetGenesisBlock(CBlock& block) { genesis = block; }
+    void SetRequireStandard(const bool requireStandard) { fRequireStandard = requireStandard ; }
+    void SetNetworkIDString(std::string strNetwork) { strNetworkID = strNetwork; }
+    void SetDNSSeeds(std::vector<CDNSSeedData>& seeds) { vSeeds = seeds; }
+    void SetBase58Prefix(std::vector<unsigned char>& prefix, const Base58Type type) { base58Prefixes[type] = prefix; }
+    void SetFixedSeeds(std::vector<SeedSpec6>& seeds) { vFixedSeeds = seeds; }
+    void SetCheckpoints(CCheckpointData& checkpoints) { checkpointData = checkpoints; }
+    void SetConsensusGenesisHash(const uint256& genesisHash) { consensus.hashGenesisBlock = genesisHash; }
 protected:
     CChainParams() {}
 

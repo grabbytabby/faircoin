@@ -17,8 +17,13 @@
 #include <stdio.h>
 #include <assert.h>
 #include <boost/assign/list_of.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+
+#include <univalue.h>
 
 CDynamicChainParams dynParams;
+string strChainName;
 
 #define SHOW_GENESIS_HASHES 0
 
@@ -33,6 +38,17 @@ CDynamicChainParams dynParams;
             genesis.hashMerkleRoot.ToString().c_str(), \
             genesis.hashPayload.ToString().c_str())
 #endif
+
+#define CHECK_PARAM(a,b,c) \
+    param = c[a]; \
+    if (param.isNull()) { \
+        fprintf(stderr, "\"" a "\" was not found in the definition file.\n"); \
+        return false; \
+    } \
+    if (param.getType() != b) { \
+        fprintf(stderr, "\"" a "\" is of wrong type.\n"); \
+        return false; \
+    }
 
 #define GENESIS_BLOCK_TIMESTAMP 1500364800
 const char* genesisMessage = "FairCoin - the currency for a fair economy.";
@@ -321,6 +337,302 @@ public:
 };
 static CRegTestParams regTestParams;
 
+
+class CCustomParams : public CChainParams {
+public:
+    CCustomParams() {
+        strNetworkID = "custom";
+    }
+
+    bool isInitialised() { return fInitialised; }
+    void init() { fInitialised = true; }
+private:
+
+    bool fInitialised = false;
+};
+static CCustomParams customParams;
+
+static uint32_t str2Uint32(const UniValue& param)
+{
+    uint32_t nValue;
+    stringstream ss;
+    ss << hex << param.getValStr();
+    ss >> nValue;
+
+    return nValue;
+}
+
+bool ParseDynamicChainParameters(CDynamicChainParams& dp, const UniValue& valNetDef)
+{
+    UniValue param;
+
+    CHECK_PARAM("blockSpacing", UniValue::VNUM, valNetDef);
+    dp.nBlockSpacing = param.get_int();
+
+    CHECK_PARAM("blockSpacingGracePeriod", UniValue::VNUM, valNetDef);
+    dp.nBlockSpacingGracePeriod = param.get_int();
+
+    CHECK_PARAM("maxAdminSigs", UniValue::VNUM, valNetDef);
+    dp.nMaxAdminSigs = param.get_int();
+
+    CHECK_PARAM("minAdminSigs", UniValue::VNUM, valNetDef);
+    dp.nMinAdminSigs = param.get_int();
+
+    CHECK_PARAM("transactionFee", UniValue::VNUM, valNetDef);
+    dp.nTransactionFee = param.get_int64();
+
+    CHECK_PARAM("dustThreshold", UniValue::VNUM, valNetDef);
+    dp.nDustThreshold = param.get_int64();
+
+    CHECK_PARAM("minSuccessiveSignatures", UniValue::VNUM, valNetDef);
+    dp.nMinSuccessiveSignatures = param.get_int();
+
+    CHECK_PARAM("blocksToConsiderForSigCheck", UniValue::VNUM, valNetDef);
+    dp.nBlocksToConsiderForSigCheck = param.get_int();
+
+    CHECK_PARAM("percentageOfSignaturesMean", UniValue::VNUM, valNetDef);
+    dp.nPercentageOfSignaturesMean = param.get_int();
+
+    CHECK_PARAM("maxBlockSize", UniValue::VNUM, valNetDef);
+    dp.nMaxBlockSize = param.get_int();
+
+    CHECK_PARAM("blockPropagationWaitTime", UniValue::VNUM, valNetDef);
+    dp.nBlockPropagationWaitTime = param.get_int();
+
+    CHECK_PARAM("retryNewSigSetInterval", UniValue::VNUM, valNetDef);
+    dp.nRetryNewSigSetInterval = param.get_int();
+
+    CHECK_PARAM("coinbaseMaturity", UniValue::VNUM, valNetDef);
+    dp.nCoinbaseMaturity = param.get_int();
+
+    CHECK_PARAM("description", UniValue::VSTR, valNetDef);
+    dp.strDescription = param.getValStr();
+
+    return true;
+}
+
+static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
+{
+    UniValue param;
+    CHECK_PARAM("jsonVersion", UniValue::VNUM, valNetDef);
+    if (param.get_int() != 1) {
+        fprintf(stderr, "invalid json version: %d\n", param.get_int());
+        return false;
+    }
+
+    CHECK_PARAM("chainName", UniValue::VSTR, valNetDef);
+    strChainName = param.getValStr();
+    if (strChainName.empty() || strChainName.size() > 64) {
+        fprintf(stderr, "chainName is empty or too long\n");
+        return false;
+    }
+    p.SetNetworkIDString(strChainName);
+
+    CHECK_PARAM("networkMagic", UniValue::VSTR, valNetDef);
+    p.SetMessageStart(str2Uint32(param));
+
+    CHECK_PARAM("alertPubKey", UniValue::VSTR, valNetDef);
+    vector<unsigned char> vAlertPubKey = ParseHex(param.getValStr());
+    if (vAlertPubKey.size() != 65) {
+        fprintf(stderr, "invalid alertPubKey length\n");
+        return false;
+    }
+    p.SetAlertKey(vAlertPubKey);
+
+    CHECK_PARAM("defaultPort", UniValue::VNUM, valNetDef);
+    int nPort = param.get_int();
+    if (nPort < 1 || nPort > 0xffff /* || nPort == mainParams.GetDefaultPort()*/ || nPort == testNetParams.GetDefaultPort()) {
+        fprintf(stderr, "invalid default port: %d\n", nPort);
+        return false;
+    }
+    p.SetDefaultPort(nPort);
+
+    CHECK_PARAM("seedNodes", UniValue::VARR, valNetDef);
+    const UniValue& nodes = param.get_array();
+    std::vector<CDNSSeedData> vSeeds;
+    for (unsigned int idx = 0; idx < nodes.size(); idx++) {
+        const UniValue& node = nodes[idx];
+        if (node.isNull() || node.getType() != UniValue::VSTR) {
+            fprintf(stderr, "invalid entry in \"seedNodes\"\n");
+            return false;
+        }
+        vSeeds.push_back(CDNSSeedData((idx + 1) + ".custom.fair-coin.org", node.getValStr()));
+    }
+    p.SetDNSSeeds(vSeeds);
+
+    CHECK_PARAM("fixedSeeds", UniValue::VARR, valNetDef);
+    const UniValue& fixedSeeds = param.get_array();
+    std::vector<SeedSpec6> vFixedSeeds;
+    for (unsigned int idx = 0; idx < fixedSeeds.size(); idx++) {
+        const UniValue& node = nodes[idx];
+        if (node.isNull() || node.getType() != UniValue::VOBJ) {
+            fprintf(stderr, "invalid entry in \"fixedSeeds\"\n");
+            return false;
+        }
+
+        CHECK_PARAM("ipAddress", UniValue::VSTR, node);
+        const string& ipAddr = param.getValStr();
+        if (ipAddr.size() != 32) {
+            fprintf(stderr, "invalid ip address %s in \"fixedSeeds\"\n", ipAddr.c_str());
+            return false;
+        }
+        vector<unsigned char> vIpAddr = ParseHex(param.getValStr());
+
+        SeedSpec6 entry;
+        memcpy(entry.addr, &vIpAddr[0], 16);
+
+        CHECK_PARAM("port", UniValue::VNUM, node);
+        entry.port = param.get_int();
+
+        vFixedSeeds.push_back(entry);
+    }
+    p.SetFixedSeeds(vFixedSeeds);
+
+    CHECK_PARAM("pubKeyAddrVersion", UniValue::VNUM, valNetDef);
+    int nAddrVer = param.get_int();
+    if (nAddrVer < 1 || nAddrVer > 255) {
+        fprintf(stderr, "\"pubKeyAddrVersion\" out of range\n");
+        return false;
+    }
+    std::vector<unsigned char> addrVer(1,nAddrVer);
+    p.SetBase58Prefix(addrVer, CChainParams::PUBKEY_ADDRESS);
+
+    CHECK_PARAM("scriptAddrVersion", UniValue::VNUM, valNetDef);
+    nAddrVer = param.get_int();
+    if (nAddrVer < 1 || nAddrVer > 255) {
+        fprintf(stderr, "\"scriptAddrVersion\" out of range\n");
+        return false;
+    }
+    std::vector<unsigned char> scriptVer(1,nAddrVer);
+    p.SetBase58Prefix(scriptVer, CChainParams::SCRIPT_ADDRESS);
+
+    CHECK_PARAM("secretKeyVersion", UniValue::VNUM, valNetDef);
+    nAddrVer = param.get_int();
+    if (nAddrVer < 1 || nAddrVer > 255) {
+        fprintf(stderr, "\"scriptAddrVersion\" out of range\n");
+        return false;
+    }
+    std::vector<unsigned char> secretVer(1,nAddrVer);
+    p.SetBase58Prefix(secretVer, CChainParams::SECRET_KEY);
+
+    CHECK_PARAM("extPubKeyPrefix", UniValue::VSTR, valNetDef);
+    uint32_t nExtPK = str2Uint32(param);
+
+    std::vector<unsigned char> extPub = boost::assign::list_of
+            ((nExtPK >>  0) & 0xff)
+            ((nExtPK >>  8) & 0xff)
+            ((nExtPK >> 16) & 0xff)
+            ((nExtPK >> 24) & 0xff).convert_to_container<std::vector<unsigned char> >();
+    p.SetBase58Prefix(extPub, CChainParams::EXT_PUBLIC_KEY);
+
+    CHECK_PARAM("extSecretPrefix", UniValue::VSTR, valNetDef);
+    uint32_t nExtSK = str2Uint32(param);
+
+    std::vector<unsigned char> extSec = boost::assign::list_of
+            ((nExtSK >>  0) & 0xff)
+            ((nExtSK >>  8) & 0xff)
+            ((nExtSK >> 16) & 0xff)
+            ((nExtSK >> 24) & 0xff).convert_to_container<std::vector<unsigned char> >();
+    p.SetBase58Prefix(extSec, CChainParams::EXT_SECRET_KEY);
+
+    CHECK_PARAM("requireStandardTx", UniValue::VBOOL, valNetDef);
+    p.SetRequireStandard(param.getBool());
+
+    CHECK_PARAM("dynamicChainParams", UniValue::VOBJ, valNetDef);
+    CDynamicChainParams dynParams;
+    if (!ParseDynamicChainParameters(dynParams, param)) {
+        return false;
+    }
+
+    CHECK_PARAM("blockchainStartTime", UniValue::VNUM, valNetDef);
+    uint32_t nTimeStamp = param.get_int();
+
+    CHECK_PARAM("genesisCvnID", UniValue::VSTR, valNetDef);
+    uint32_t nGenesisCvnID = str2Uint32(param);
+    CHECK_PARAM("genesisAdminID", UniValue::VSTR, valNetDef);
+    uint32_t nGenesisAdminID = str2Uint32(param);
+
+    CBlock genesis = CreateGenesisBlock(nTimeStamp, nGenesisCvnID, dynParams);
+
+    CHECK_PARAM("genesisCvnPubKey", UniValue::VSTR, valNetDef);
+    genesis.vCvns.resize(1);
+    genesis.vCvns[0] = CCvnInfo(nGenesisCvnID, 0, CSchnorrPubKeyDER(param.getValStr()));
+
+    CHECK_PARAM("genesisAdminPubKey", UniValue::VSTR, valNetDef);
+    genesis.vChainAdmins.resize(1);
+    genesis.vChainAdmins[0] = CChainAdmin(nGenesisAdminID, 0, CSchnorrPubKeyDER(param.getValStr()));
+
+    CHECK_PARAM("chainMultiSig", UniValue::VSTR, valNetDef);
+    genesis.chainMultiSig = CSchnorrSigS(param.getValStr());
+    genesis.vAdminIds.push_back(nGenesisAdminID);
+
+    CHECK_PARAM("adminMultiSig", UniValue::VSTR, valNetDef);
+    genesis.adminMultiSig = CSchnorrSigS(param.getValStr());
+
+    CHECK_PARAM("creatorSignature", UniValue::VSTR, valNetDef);
+    genesis.creatorSignature = CSchnorrSigS(param.getValStr());
+
+    genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
+    genesis.hashPayload    = genesis.GetPayloadHash();
+
+    p.SetGenesisBlock(genesis);
+    const uint256 genesisHash = genesis.GetHash();
+
+    p.SetConsensusGenesisHash(genesisHash);
+
+    CHECK_PARAM("blockHash", UniValue::VSTR, valNetDef);
+    const string strBlockHash = param.getValStr();
+    if (genesisHash != uint256S(strBlockHash)) {
+        fprintf(stderr, "could not verify \"blockHash\"\n");
+        return false;
+    }
+
+    CHECK_PARAM("merkleRoot", UniValue::VSTR, valNetDef);
+    const string strMerkleRoot = param.getValStr();
+    if (genesis.hashMerkleRoot != uint256S(strMerkleRoot)) {
+        fprintf(stderr, "could not verify \"merkleRoot\"\n");
+        return false;
+    }
+
+    CHECK_PARAM("payloadHash", UniValue::VSTR, valNetDef);
+    const string strPayloadHash = param.getValStr();
+    if (genesis.hashPayload != uint256S(strPayloadHash)) {
+        fprintf(stderr, "could not verify \"payloadHash\"\n");
+        return false;
+    }
+
+    return true;
+}
+
+static bool InitialiseCustomParams()
+{
+    const std::string strDataDir = GetArg("-netname", "");
+    if (strDataDir.empty())
+        throw std::runtime_error(strprintf("%s: internal error, chain name unavailable.", __func__));
+
+    fprintf(stdout, "Reading custom chain parameters from file: %s\n", (GetDataDir(false) / (strDataDir + ".json")).c_str());
+
+    boost::filesystem::ifstream streamNetDef(GetDataDir(false) / (strDataDir + ".json"));
+    if (!streamNetDef.good()) {
+        fprintf(stderr, "ERROR: could not find file %s\n", (strDataDir + ".json").c_str());
+        return false;
+    }
+
+    UniValue valNetDef(UniValue::VOBJ); // network definition information in JSON format
+
+    std::string str((std::istreambuf_iterator<char>(streamNetDef)), std::istreambuf_iterator<char>());
+    if (!valNetDef.read(str)) {
+        fprintf(stderr, "ERROR: could not parse file %s\n", (strDataDir + ".json").c_str());
+        return false;
+    }
+
+    if (!CreateGenesisBlock(customParams, valNetDef)) {
+        return false;
+    }
+
+    return true;
+}
+
 static CChainParams *pCurrentParams = 0;
 
 const CChainParams &Params() {
@@ -331,11 +643,19 @@ const CChainParams &Params() {
 CChainParams& Params(const std::string& chain)
 {
     if (chain == CBaseChainParams::MAIN)
-            return mainParams;
+        return mainParams;
     else if (chain == CBaseChainParams::TESTNET)
-            return testNetParams;
+        return testNetParams;
     else if (chain == CBaseChainParams::REGTEST)
-            return regTestParams;
+        return regTestParams;
+    else if (chain == CBaseChainParams::CUSTOM) {
+        if (!customParams.isInitialised()) {
+            if (!InitialiseCustomParams()) {
+                throw std::runtime_error(strprintf("%s: error could not initialise custom parameters", __func__));
+            }
+        }
+        return customParams;
+    }
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }

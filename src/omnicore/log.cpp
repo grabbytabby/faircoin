@@ -154,7 +154,7 @@ int LogFilePrint(const std::string& str)
         // Print to console
         ret = ConsolePrint(str);
     }
-    else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
+    else if (fPrintToDebugLog) {
         static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
