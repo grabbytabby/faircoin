@@ -604,17 +604,26 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
     return true;
 }
 
+static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::list_of
+   (CSchnorrPubKeyDER("04a2bb310b665a2479666b0b4e591cce3ddede393a26954bf1b0ebd37a1b666cb2acb4396bcdeeec15d9aabaae3477122aa7a0286049e338ca5237f33b0f9ad31e"))
+   (CSchnorrPubKeyDER("04d7175ec64a05994dd85e95127ecdaffc2f2135b2b72255bca9c0c002b23e0607b947629d59712bfa66d1c8b499333ca1625da054ad281f1767e7e5e42c565f54"))
+;
+
+bool fOfficialFairChain = false;
+
 static bool InitialiseCustomParams()
 {
     const std::string strDataDir = GetArg("-netname", "");
     if (strDataDir.empty())
         throw std::runtime_error(strprintf("%s: internal error, chain name unavailable.", __func__));
 
-    fprintf(stdout, "Reading custom chain parameters from file: %s\n", (GetDataDir(false) / (strDataDir + ".json")).c_str());
+    const std::string strFileName = strDataDir + ".json";
 
-    boost::filesystem::ifstream streamNetDef(GetDataDir(false) / (strDataDir + ".json"));
+    fprintf(stdout, "Reading custom chain parameters from file: %s\n", (GetDataDir(false) / strFileName).c_str());
+
+    boost::filesystem::ifstream streamNetDef(GetDataDir(false) / strFileName);
     if (!streamNetDef.good()) {
-        fprintf(stderr, "ERROR: could not find file %s\n", (strDataDir + ".json").c_str());
+        fprintf(stderr, "ERROR: could not find file %s\n", strFileName.c_str());
         return false;
     }
 
@@ -622,11 +631,76 @@ static bool InitialiseCustomParams()
 
     std::string str((std::istreambuf_iterator<char>(streamNetDef)), std::istreambuf_iterator<char>());
     if (!valNetDef.read(str)) {
-        fprintf(stderr, "ERROR: could not parse file %s\n", (strDataDir + ".json").c_str());
+        fprintf(stderr, "ERROR: could not parse file %s\n", strFileName.c_str());
         return false;
     }
 
-    if (!CreateGenesisBlock(customParams, valNetDef)) {
+    UniValue param;
+    CHECK_PARAM("data", UniValue::VOBJ, valNetDef);
+    const UniValue valData = param;
+
+    CHashWriter hasher(SER_GETHASH, 0);
+    hasher << std::string("Official FairChains parameter file");
+    hasher << param.write(0, 0);
+
+    const uint256 hashData = hasher.GetHash();
+
+    CHECK_PARAM("sign", UniValue::VOBJ, valNetDef);
+    const UniValue valSign = param;
+
+    CHECK_PARAM("hash", UniValue::VSTR, valNetDef);
+    const uint256 hashCheck = uint256S(param.getValStr());
+
+    if (hashData != hashCheck) {
+        fprintf(stderr, "ERROR: file %s most probably corrupted. Hash check failed.\n", strFileName.c_str());
+        return false;
+    }
+
+    CHECK_PARAM("signature", UniValue::VSTR, valSign);
+    const std::string strSignature = param.getValStr();
+
+    if (strSignature.empty()) {
+        fprintf(stderr, "WARNING: file %s does not contain a signature and can not be verified.\nThis is NOT an official FairChain.\n", strFileName.c_str());
+        MilliSleep(5000);
+    } else {
+        CHashWriter hasherSig(SER_GETHASH, 0);
+        hasherSig << hashData;
+
+        CHECK_PARAM("comment", UniValue::VSTR, valSign);
+        hasherSig << param.getValStr();
+
+        uint256 hashSig = hasherSig.GetHash();
+
+        if (strSignature.size() != 2 * 64) {
+            reverse(hashSig.begin(), hashSig.end()); // reverse it so hashSig.ToString() displays it correctly
+            fprintf(stderr, "ERROR: invalid signature in file %s for hash %s.\n", strFileName.c_str(), hashSig.ToString().c_str());
+            return false;
+        }
+
+        const CSchnorrSig sigData = CSchnorrSigS(strSignature);
+
+        // secp256k1 context does exists yet. Create a temporary context for signature verification
+        ECCVerifyHandle *ptrHandle = new ECCVerifyHandle();
+        bool fGoodSignature = false;
+
+        BOOST_FOREACH(const CSchnorrPubKey &pubKey, officialChainParamPubKeys) {
+            fGoodSignature = CPubKey::VerifySchnorr(hashSig, sigData, pubKey);
+            if (fGoodSignature) {
+                fprintf(stderr, "Successfully verified signature of file %s. This is an official FairChain.\n", strFileName.c_str());
+                fOfficialFairChain = true;
+                break;
+            }
+        }
+
+        delete ptrHandle;
+
+        if (!fGoodSignature) {
+            fprintf(stderr, "ERROR: could not verify signature in file %s.\n", strFileName.c_str());
+            return false;
+        }
+    }
+
+    if (!CreateGenesisBlock(customParams, valData)) {
         return false;
     }
 
