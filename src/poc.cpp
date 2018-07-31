@@ -502,49 +502,6 @@ bool CreateSumPublicNoncesOthers(CSchnorrPubKey &sumPublicNoncesOthers, const ui
     return true;
 }
 
-bool VerifyNoncePoolEntry(const int &nPoolOffset)
-{
-    CHashWriter hasher(SER_GETHASH, 0);
-
-    if (!nCvnNodeId) {
-        LogPrintf("%s : CVN node not initialised\n", __func__);
-        return false;
-    }
-
-    CvnMapType::iterator cvnInfoIter = mapCVNs.find(nCvnNodeId);
-
-    if (cvnInfoIter == mapCVNs.end()) {
-        LogPrintf("%s : # %d could not find CvnInfo for signer ID 0x%08x\n", __func__, nPoolOffset, nCvnNodeId);
-        return false;
-    }
-
-    CSchnorrPubKey dummySumPublicNoncesOthers = cvnInfoIter->second.pubKey;
-    hasher << dummySumPublicNoncesOthers;
-
-    uint256 hashToSign = hasher.GetHash();
-    CSchnorrSig signature;
-
-    if (GetArg("-cvn", "") == "fasito") {
-#ifdef USE_FASITO
-        if (!fasito.fLoggedIn) {
-            LogPrint("cvn", "%s : not logged into Fasito. Cannot create partial signature.\n", __func__);
-            return false;
-        }
-
-        if (!CvnSignPartialWithFasito(hashToSign, fasito.nCVNKeyIndex, dummySumPublicNoncesOthers, signature, nPoolOffset))
-            return false;
-#else
-        LogPrintf("%s : this wallet was not compiled with Fasito support.\n", __func__);
-        return false;
-#endif
-    } else {
-        if (!CvnSignPartialWithKey(hashToSign, cvnPrivKey, dummySumPublicNoncesOthers, signature, nPoolOffset))
-            return false;
-    }
-
-    return VerifyPartialSignature(hashToSign, signature, dummySumPublicNoncesOthers, dummySumPublicNoncesOthers);
-}
-
 static void UpdateHashWithMissingIDs(CHashWriter &hasher, const vector<uint32_t> &vMissingSignerIds)
 {
     if (vMissingSignerIds.empty())
@@ -953,67 +910,6 @@ void SetCoinSupplyStatus(const CBlock* pblock)
     } else {
         LogPrint("cvn", "found non final coins supply: %s\n", pblock->coinSupply.ToString());
     }
-}
-
-bool CheckDynamicChainParameters(const CDynamicChainParams& params)
-{
-    if (params.nBlockSpacing > MAX_BLOCK_SPACING || params.nBlockSpacing < MIN_BLOCK_SPACING) {
-        LogPrintf("%s : block spacing %u exceeds limit\n",__func__ , params.nBlockSpacing);
-        return false;
-    }
-
-    if (params.nTransactionFee > MAX_TX_FEE_THRESHOLD || params.nTransactionFee < MIN_TX_FEE_THRESHOLD) {
-        LogPrintf("%s : tx fee threshold %u exceeds limit\n",__func__ , params.nTransactionFee);
-        return false;
-    }
-
-    if (params.nDustThreshold > MAX_DUST_THRESHOLD || params.nDustThreshold < MIN_DUST_THRESHOLD) {
-        LogPrintf("%s : dust threshold %u exceeds limit\n",__func__ , params.nDustThreshold);
-        return false;
-    }
-
-    if (!params.nMinAdminSigs || params.nMinAdminSigs > params.nMaxAdminSigs) {
-        LogPrintf("%s : number of CVN signers %u/%u exceeds limit\n",__func__ , params.nMinAdminSigs, params.nMaxAdminSigs);
-        return false;
-    }
-
-    if (params.nBlocksToConsiderForSigCheck < MIN_BLOCKS_TO_CONSIDER_FOR_SIG_CHECK || params.nBlocksToConsiderForSigCheck > MAX_BLOCKS_TO_CONSIDER_FOR_SIG_CHECK) {
-        LogPrintf("%s : %u blocksToConsiderForSigCheck is out of bounds\n",__func__ , params.nBlocksToConsiderForSigCheck);
-        return false;
-    }
-
-    if (params.nPercentageOfSignaturesMean < MIN_PERCENTAGE_OF_SIGNATURES_MEAN || params.nPercentageOfSignaturesMean > MAX_PERCENTAGE_OF_SIGNATURES_MEAN) {
-        LogPrintf("%s : %u nPercentageOfSignatureMean is out of bounds\n",__func__ , params.nPercentageOfSignaturesMean);
-        return false;
-    }
-
-    if (params.nMaxBlockSize < MIN_SIZE_OF_BLOCK || params.nMaxBlockSize > MAX_SIZE_OF_BLOCK) {
-        LogPrintf("%s : %u nMaxBlockSize is out of bounds\n",__func__ , params.nMaxBlockSize);
-        return false;
-    }
-
-    if (params.nBlockPropagationWaitTime < MIN_BLOCK_PROPAGATION_WAIT_TIME || params.nBlockPropagationWaitTime > MAX_BLOCK_PROPAGATION_WAIT_TIME ||
-            params.nBlockPropagationWaitTime >= params.nBlockSpacing) {
-        LogPrintf("%s : %u nBlockPropagationWaitTime is out of bounds\n",__func__ , params.nBlockPropagationWaitTime);
-        return false;
-    }
-
-    if (params.nRetryNewSigSetInterval < MIN_RETRY_NEW_SIG_SET_INTERVAL || params.nRetryNewSigSetInterval > MAX_RETRY_NEW_SIG_SET_INTERVAL) {
-        LogPrintf("%s : %u nRetryNewSigSetInterval is out of bounds\n",__func__ , params.nRetryNewSigSetInterval);
-        return false;
-    }
-
-    if (params.nCoinbaseMaturity < MIN_COINBASE_MATURITY || params.nCoinbaseMaturity > MAX_COINBASE_MATURITY) {
-        LogPrintf("%s : %u nCoinbaseMaturity is out of bounds\n",__func__ , params.nCoinbaseMaturity);
-        return false;
-    }
-
-    if (params.strDescription.length() <= MIN_CHAIN_DATA_DESCRIPTION_LEN) {
-        LogPrintf("%s : chain data description is too short: %s\n",__func__ , params.strDescription);
-        return false;
-    }
-
-    return true;
 }
 
 void UpdateChainParameters(const CBlock* pblock)
@@ -2193,6 +2089,49 @@ static bool SendCVNSignature(POCStateHolder &s, const vector<uint32_t> &vMissing
 
     s.commonRxs.push_back(msg.signature.GetRx());
     return true;
+}
+
+static bool VerifyNoncePoolEntry(const int &nPoolOffset)
+{
+    CHashWriter hasher(SER_GETHASH, 0);
+
+    if (!nCvnNodeId) {
+        LogPrintf("%s : CVN node not initialised\n", __func__);
+        return false;
+    }
+
+    CvnMapType::iterator cvnInfoIter = mapCVNs.find(nCvnNodeId);
+
+    if (cvnInfoIter == mapCVNs.end()) {
+        LogPrintf("%s : # %d could not find CvnInfo for signer ID 0x%08x\n", __func__, nPoolOffset, nCvnNodeId);
+        return false;
+    }
+
+    CSchnorrPubKey dummySumPublicNoncesOthers = cvnInfoIter->second.pubKey;
+    hasher << dummySumPublicNoncesOthers;
+
+    uint256 hashToSign = hasher.GetHash();
+    CSchnorrSig signature;
+
+    if (GetArg("-cvn", "") == "fasito") {
+#ifdef USE_FASITO
+        if (!fasito.fLoggedIn) {
+            LogPrint("cvn", "%s : not logged into Fasito. Cannot create partial signature.\n", __func__);
+            return false;
+        }
+
+        if (!CvnSignPartialWithFasito(hashToSign, fasito.nCVNKeyIndex, dummySumPublicNoncesOthers, signature, nPoolOffset))
+            return false;
+#else
+        LogPrintf("%s : this wallet was not compiled with Fasito support.\n", __func__);
+        return false;
+#endif
+    } else {
+        if (!CvnSignPartialWithKey(hashToSign, cvnPrivKey, dummySumPublicNoncesOthers, signature, nPoolOffset))
+            return false;
+    }
+
+    return VerifyPartialSignature(hashToSign, signature, dummySumPublicNoncesOthers, dummySumPublicNoncesOthers);
 }
 
 static bool SetUpNoncePool()

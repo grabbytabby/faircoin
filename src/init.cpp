@@ -1177,11 +1177,12 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler, const str
     UpdateCvnInfo(&genesisBlock, 0);
     UpdateChainAdmins(&genesisBlock);
 
-    nChainAdminId = InitChainAdminWithCertificate("123456");
+    string strError;
+    nChainAdminId = InitChainAdminWithCertificate("123456", strError);
     LogPrintf("\n");
     CCvnPartialSignature chainSig;
     vector<uint32_t> vMissingSignatures;
-    CvnSignPartial(genesisBlock.hashPrevBlock, chainSig, GENESIS_NODE_ID, GENESIS_NODE_ID, vMissingSignatures);
+    CvnSignPartial(genesisBlock.hashPrevBlock, chainSig, GENESIS_NODE_ID, GENESIS_NODE_ID, vMissingSignatures, 0);
     LogPrintf("Genesis chainMultiSig    : %s\n", chainSig.signature.ToString());
 
     CSchnorrSig chainAdminSig;

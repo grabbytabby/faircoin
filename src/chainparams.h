@@ -14,6 +14,7 @@
 #include <vector>
 
 extern CDynamicChainParams dynParams;
+extern bool CheckDynamicChainParameters(const CDynamicChainParams& params);
 
 struct CDNSSeedData {
     std::string name, host;
