@@ -11,10 +11,15 @@
 #include "primitives/block.h"
 #include "protocol.h"
 
+#include <univalue.h>
+
 #include <vector>
 
 extern CDynamicChainParams dynParams;
 extern bool CheckDynamicChainParameters(const CDynamicChainParams& params);
+
+extern CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nCreatorId, const CDynamicChainParams& dynamicChainParams);
+extern bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileName, const bool fUnsignedPenalty = true);
 
 struct CDNSSeedData {
     std::string name, host;

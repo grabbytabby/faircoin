@@ -75,7 +75,7 @@ class CBaseCustomParams : public CBaseChainParams
 public:
     CBaseCustomParams()
     {
-        nRPCPort = 44405;
+        nRPCPort = 49405;
     }
 };
 static CBaseCustomParams customParams;

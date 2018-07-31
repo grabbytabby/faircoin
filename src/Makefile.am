@@ -70,11 +70,11 @@ TESTS =
 BENCHMARKS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += faircoind
+  bin_PROGRAMS += fairchainsd
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += faircoin-cli faircoin-tx
+  bin_PROGRAMS += fairchains-cli fairchains-tx fairchains-tool
 endif
 
 .PHONY: FORCE check-symbols check-security
@@ -380,16 +380,16 @@ nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # bitcoind binary #
-faircoind_SOURCES = bitcoind.cpp
-faircoind_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-faircoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-faircoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+fairchainsd_SOURCES = bitcoind.cpp
+fairchainsd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+fairchainsd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+fairchainsd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-faircoind_SOURCES += bitcoind-res.rc
+fairchainsd_SOURCES += bitcoind-res.rc
 endif
 
-faircoind_LDADD = \
+fairchainsd_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_COMMON) \
   $(LIBUNIVALUE) \
@@ -403,38 +403,42 @@ faircoind_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-faircoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+fairchainsd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
-# bitcoin-cli binary #
-faircoin_cli_SOURCES = bitcoin-cli.cpp
-faircoin_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-faircoin_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-faircoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# fairchains-cli binary #
+fairchains_cli_SOURCES = bitcoin-cli.cpp
+fairchains_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
+fairchains_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+fairchains_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-faircoin_cli_SOURCES += bitcoin-cli-res.rc
+fairchains_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
-faircoin_cli_LDADD = \
+fairchains_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO)
 
-faircoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
-#
+fairchains_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 
-# bitcoin-tx binary #
-faircoin_tx_SOURCES = bitcoin-tx.cpp
-faircoin_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-faircoin_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-faircoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# fairchains-tool binary #
+fairchains_tool_SOURCES = \
+  fairchains-tool.cpp \
+  fairchains-tool-input.cpp \
+  fairchains-tool-key.cpp \
+  fairchains-tool-input.h \
+  fairchains-tool-key.h
+fairchains_tool_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+fairchains_tool_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+fairchains_tool_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-faircoin_tx_SOURCES += bitcoin-tx-res.rc
+fairchains_tool_SOURCES += fairchains-tool-res.rc
 endif
 
-faircoin_tx_LDADD = \
+fairchains_tool_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
@@ -442,7 +446,28 @@ faircoin_tx_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBSECP256K1)
 
-faircoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+fairchains_tool_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+#
+
+# fairchains-tx binary #
+fairchains_tx_SOURCES = bitcoin-tx.cpp
+fairchains_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+fairchains_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+fairchains_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+
+if TARGET_WINDOWS
+fairchains_tx_SOURCES += bitcoin-tx-res.rc
+endif
+
+fairchains_tx_LDADD = \
+  $(LIBUNIVALUE) \
+  $(LIBBITCOIN_COMMON) \
+  $(LIBBITCOIN_UTIL) \
+  $(LIBBITCOIN_CONSENSUS) \
+  $(LIBBITCOIN_CRYPTO) \
+  $(LIBSECP256K1)
+
+fairchains_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
 # bitcoinconsensus library #

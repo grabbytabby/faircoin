@@ -7,21 +7,22 @@ define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, false)
 define(_COPYRIGHT_YEAR, 2018)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
-define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[FairCoin Core]])
+define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[FairChains Core]])
 define(_OMNICORE_VERSION_MAJOR, 0)
 define(_OMNICORE_VERSION_MINOR, 3)
 define(_OMNICORE_VERSION_PATCH, 0)
 define(_OMNICORE_VERSION_BUILD, 0)
-AC_INIT([FairCoin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/faircoin/faircoin/issues],[faircoin],[https://fair-coin.org/])
+AC_INIT([FairChains Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/fairchains/fairchains/issues],[fairchains],[https://fairchains.org/])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([src/config/faircoin-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 
 BITCOIN_DAEMON_NAME=faircoind
-BITCOIN_GUI_NAME=faircoin-qt
-BITCOIN_CLI_NAME=faircoin-cli
-BITCOIN_TX_NAME=faircoin-tx
+BITCOIN_GUI_NAME=fairchains-qt
+BITCOIN_CLI_NAME=fairchains-cli
+BITCOIN_TX_NAME=fairchains-tx
+BITCOIN_TOOL_NAME=fairchains-tool
 
 AC_CANONICAL_HOST
 
@@ -1180,6 +1181,7 @@ AC_SUBST(COPYRIGHT_HOLDERS_FINAL, "_COPYRIGHT_HOLDERS_FINAL")
 AC_SUBST(BITCOIN_DAEMON_NAME)
 AC_SUBST(BITCOIN_GUI_NAME)
 AC_SUBST(BITCOIN_CLI_NAME)
+AC_SUBST(BITCOIN_TOOL_NAME)
 AC_SUBST(BITCOIN_TX_NAME)
 
 AC_DEFINE(OMNICORE_VERSION_MAJOR, _OMNICORE_VERSION_MAJOR, [Omni Core major version])

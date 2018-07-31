@@ -120,7 +120,9 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
 {
     GUIUtil::restoreWindowGeometry("nWindow", QSize(850, 550), this);
 
-    QString windowTitle = tr("FairCoin Core") + " - ";
+    const string strNetName = GetArg("-netname", "");
+    QString windowTitle = tr("FairChains") + " " + (strNetName != "" ? string(strNetName + " - ").c_str() : string("- ").c_str());
+
 #ifdef ENABLE_WALLET
     /* if compiled with wallet support, -disablewallet can still disable the wallet */
     enableWallet = !GetBoolArg("-disablewallet", false);

@@ -20,8 +20,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
-#include <univalue.h>
-
 CDynamicChainParams dynParams;
 string strChainName;
 
@@ -53,7 +51,7 @@ string strChainName;
 #define GENESIS_BLOCK_TIMESTAMP 1500364800
 const char* genesisMessage = "FairCoin - the currency for a fair economy.";
 
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nCreatorId, const CDynamicChainParams& dynamicChainParams)
+CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nCreatorId, const CDynamicChainParams& dynamicChainParams)
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -344,11 +342,20 @@ public:
         strNetworkID = "custom";
     }
 
-    bool isInitialised() { return fInitialised; }
-    void init() { fInitialised = true; }
-private:
+    bool isInitialised()
+    {
+        return fInitialised;
+    }
 
+    void init(const string &chainName)
+    {
+        strChainName = chainName;
+        fInitialised = true;
+    }
+
+private:
     bool fInitialised = false;
+    string strChainName;
 };
 static CCustomParams customParams;
 
@@ -362,7 +369,7 @@ static uint32_t str2Uint32(const UniValue& param)
     return nValue;
 }
 
-bool ParseDynamicChainParameters(CDynamicChainParams& dp, const UniValue& valNetDef)
+static bool ParseDynamicChainParameters(CDynamicChainParams& dp, const UniValue& valNetDef)
 {
     UniValue param;
 
@@ -426,7 +433,7 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
         fprintf(stderr, "chainName is empty or too long\n");
         return false;
     }
-    p.SetNetworkIDString(strChainName);
+    p.SetNetworkIDString("custom");
 
     CHECK_PARAM("networkMagic", UniValue::VSTR, valNetDef);
     p.SetMessageStart(str2Uint32(param));
@@ -540,7 +547,7 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
 
     CHECK_PARAM("dynamicChainParams", UniValue::VOBJ, valNetDef);
     CDynamicChainParams dynParams;
-    if (!ParseDynamicChainParameters(dynParams, param)) {
+    if (!ParseDynamicChainParameters(dynParams, param) || !CheckDynamicChainParameters(dynParams)) {
         return false;
     }
 
@@ -556,11 +563,11 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
 
     CHECK_PARAM("genesisCvnPubKey", UniValue::VSTR, valNetDef);
     genesis.vCvns.resize(1);
-    genesis.vCvns[0] = CCvnInfo(nGenesisCvnID, 0, CSchnorrPubKeyDER(param.getValStr()));
+    genesis.vCvns[0] = CCvnInfo(nGenesisCvnID, 0, CSchnorrPubKeyS(param.getValStr()));
 
     CHECK_PARAM("genesisAdminPubKey", UniValue::VSTR, valNetDef);
     genesis.vChainAdmins.resize(1);
-    genesis.vChainAdmins[0] = CChainAdmin(nGenesisAdminID, 0, CSchnorrPubKeyDER(param.getValStr()));
+    genesis.vChainAdmins[0] = CChainAdmin(nGenesisAdminID, 0, CSchnorrPubKeyS(param.getValStr()));
 
     CHECK_PARAM("chainMultiSig", UniValue::VSTR, valNetDef);
     genesis.chainMultiSig = CSchnorrSigS(param.getValStr());
@@ -611,13 +618,13 @@ static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::li
 
 bool fOfficialFairChain = false;
 
-static bool InitialiseCustomParams()
+static bool ReadCustomParams(UniValue &valNetDef)
 {
-    const std::string strDataDir = GetArg("-netname", "");
-    if (strDataDir.empty())
+    const std::string strNetName = GetArg("-netname", "");
+    if (strNetName.empty())
         throw std::runtime_error(strprintf("%s: internal error, chain name unavailable.", __func__));
 
-    const std::string strFileName = strDataDir + ".json";
+    const std::string strFileName = strNetName + ".json";
 
     fprintf(stdout, "Reading custom chain parameters from file: %s\n", (GetDataDir(false) / strFileName).c_str());
 
@@ -627,14 +634,17 @@ static bool InitialiseCustomParams()
         return false;
     }
 
-    UniValue valNetDef(UniValue::VOBJ); // network definition information in JSON format
-
     std::string str((std::istreambuf_iterator<char>(streamNetDef)), std::istreambuf_iterator<char>());
     if (!valNetDef.read(str)) {
         fprintf(stderr, "ERROR: could not parse file %s\n", strFileName.c_str());
         return false;
     }
 
+    return true;
+}
+
+bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileName, const bool fUnsignedPenalty)
+{
     UniValue param;
     CHECK_PARAM("data", UniValue::VOBJ, valNetDef);
     const UniValue valData = param;
@@ -652,7 +662,7 @@ static bool InitialiseCustomParams()
     const uint256 hashCheck = uint256S(param.getValStr());
 
     if (hashData != hashCheck) {
-        fprintf(stderr, "ERROR: file %s most probably corrupted. Hash check failed.\n", strFileName.c_str());
+        fprintf(stderr, "ERROR: file %s most probably corrupted. Hash check failed.\n", pFileName);
         return false;
     }
 
@@ -660,8 +670,10 @@ static bool InitialiseCustomParams()
     const std::string strSignature = param.getValStr();
 
     if (strSignature.empty()) {
-        fprintf(stderr, "WARNING: file %s does not contain a signature and can not be verified.\nThis is NOT an official FairChain.\n", strFileName.c_str());
-        MilliSleep(5000);
+        if (fUnsignedPenalty) {
+            fprintf(stderr, "WARNING: file %s does not contain a signature and can not be verified.\nThis is NOT an official FairChain.\n", pFileName);
+            MilliSleep(5000);
+        }
     } else {
         CHashWriter hasherSig(SER_GETHASH, 0);
         hasherSig << hashData;
@@ -673,7 +685,7 @@ static bool InitialiseCustomParams()
 
         if (strSignature.size() != 2 * 64) {
             reverse(hashSig.begin(), hashSig.end()); // reverse it so hashSig.ToString() displays it correctly
-            fprintf(stderr, "ERROR: invalid signature in file %s for hash %s.\n", strFileName.c_str(), hashSig.ToString().c_str());
+            fprintf(stderr, "ERROR: invalid signature in file %s for hash %s.\n", pFileName, hashSig.ToString().c_str());
             return false;
         }
 
@@ -686,7 +698,7 @@ static bool InitialiseCustomParams()
         BOOST_FOREACH(const CSchnorrPubKey &pubKey, officialChainParamPubKeys) {
             fGoodSignature = CPubKey::VerifySchnorr(hashSig, sigData, pubKey);
             if (fGoodSignature) {
-                fprintf(stderr, "Successfully verified signature of file %s. This is an official FairChain.\n", strFileName.c_str());
+                fprintf(stderr, "Successfully verified signature of file %s. This is an official FairChain.\n", pFileName);
                 fOfficialFairChain = true;
                 break;
             }
@@ -695,7 +707,7 @@ static bool InitialiseCustomParams()
         delete ptrHandle;
 
         if (!fGoodSignature) {
-            fprintf(stderr, "ERROR: could not verify signature in file %s.\n", strFileName.c_str());
+            fprintf(stderr, "ERROR: could not verify signature in file %s.\n", pFileName);
             return false;
         }
     }
@@ -724,9 +736,19 @@ CChainParams& Params(const std::string& chain)
         return regTestParams;
     else if (chain == CBaseChainParams::CUSTOM) {
         if (!customParams.isInitialised()) {
-            if (!InitialiseCustomParams()) {
+            UniValue valNetDef(UniValue::VOBJ); // network definition information in JSON format
+
+            if (!ReadCustomParams(valNetDef)) {
+                throw std::runtime_error(strprintf("%s: error could not read custom parameters file", __func__));
+            }
+
+            const string strJsonFileName = GetArg("-netname", "") + ".json";
+
+            if (!InitialiseCustomParams(valNetDef, strJsonFileName.c_str())) {
                 throw std::runtime_error(strprintf("%s: error could not initialise custom parameters", __func__));
             }
+
+            customParams.init(valNetDef["chainName"].getValStr());
         }
         return customParams;
     }
