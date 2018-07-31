@@ -4,6 +4,7 @@
 
 #include <univalue.h>
 #include "chainparams.h"
+#include "clientversion.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "key.h"
@@ -35,7 +36,53 @@ public:
     }
 };
 
+string requestPassword()
+{
+    string strPassword;
+    cout << "Supply a good password (at least 10 characters) to secure the certificates." << endl;
 
+    string strPassword1;
+    bool fPassGood = false;
+    do {
+        fPassGood = false;
+        do {
+            promptForPassword("Password: ", strPassword);
+            if (strPassword.length() < 10) {
+                cout << "--> password too short." << endl;
+            } else {
+                fPassGood = true;
+            }
+        } while (!fPassGood);
+
+        promptForPassword("Repeat password: ", strPassword1);
+        if (strPassword != strPassword1)  {
+            cout << "--> passwords do not match." << endl;
+            fPassGood = false;
+        }
+    } while (!fPassGood);
+
+    return strPassword;
+}
+
+static const string strInstructions =
+"  #################################################\n"
+"  ##                                             ##\n"
+"  ##       Welcome to the FairChains tool!       ##\n"
+"  ##  %-41s  ##\n"
+"  ##          (c) 2018  by Thomas König          ##\n"
+"  ##                                             ##\n"
+"  ##                                             ##\n"
+"  ##  This tool  is used to create  a JSON file  ##\n"
+"  ##  which  contains all  required information  ##\n"
+"  ##  to run a public/private  blockchain based  ##\n"
+"  ##  on  the   FairChains   wallet   software.  ##\n"
+"  ##                                             ##\n"
+"  ##  For  more information about the  required  ##\n"
+"  ##  input parameters visit:                    ##\n"
+"  ##  https://fairchains.org/doc                 ##\n"
+"  ##                                             ##\n"
+"  #################################################\n"
+;
 
 int main(int argc, char* argv[])
 {
@@ -56,13 +103,19 @@ int main(int argc, char* argv[])
     UniValue data(UniValue::VOBJ);
     data.push_back(Pair("jsonVersion", 1));
 
+    const string strFullVersion = FormatFullVersion();
+    const string strPaddedFullVersion = strprintf("%*s%*s", 20 + strFullVersion.length() / 2, strFullVersion, 20 - strFullVersion.length() / 2, "");
+    cout << endl << strprintf(strInstructions, strPaddedFullVersion) << endl;
+
+    string strPassword = requestPassword();
+
     prompt4String(data, "chainName", "Chain name", "mychain");
     const string strChainNmae = data["chainName"].getValStr();
 
     prompt4Hex(data, "networkMagic", "Network magic bytes", "0xfabfb5fa");
 
     CKey keyAlert;
-    if (!createKeyFile("alert-" + strChainNmae + ".pem", "FairChains network", "Alert signer", "alert", "test77", keyAlert)) {
+    if (!createKeyFile("alert-" + strChainNmae + ".pem", "FairChains network", "Alert signer", "alert", strPassword, keyAlert)) {
         fprintf(stderr, "ERROR: could not create CVN certificate\n");
         exit(0);
     }
@@ -70,8 +123,8 @@ int main(int argc, char* argv[])
     data.push_back(Pair("alertPubKey", HexStr(keyAlert.GetPubKey())));
 
     int nPort = prompt4Integer(data, "defaultPort", "Network TCP port", 49404, checkForValidPorts);
-    prompt4StringArray(data, "seedNodes", "Seed nodes (One per line. End input by entering '.' + enter)", boost::assign::list_of("seed1")("seed2"));
-    prompt4FixedSeeds(data, "fixedSeeds", "IPv4 and IPv6 addresses of fixed seed nodes (One per line. End input by entering '.' + enter)", nPort, boost::assign::list_of("194.208.12.12")("2001:af8:6250:1:ef49:aa11:bc99:42ce"));
+    prompt4StringArray(data, "seedNodes", "Seed nodes (One per line. End input by entering '.' + enter)");
+    prompt4FixedSeeds(data, "fixedSeeds", "IPv4 and IPv6 addresses of fixed seed nodes (One per line. End input by entering '.' + enter)", nPort);
     prompt4Integer(data, "pubKeyAddrVersion", "Public key address version", p.Base58Prefix(CChainParams::PUBKEY_ADDRESS)[0], checkByteSize);
     prompt4Integer(data, "scriptAddrVersion", "Script address version", p.Base58Prefix(CChainParams::SCRIPT_ADDRESS)[0], checkByteSize);
     prompt4Integer(data, "secretKeyVersion", "Secret key version", p.Base58Prefix(CChainParams::SECRET_KEY)[0], checkByteSize);
@@ -88,7 +141,7 @@ int main(int argc, char* argv[])
     ss << hex << strId;
     ss >> nCnvId;
     CKey keyCVN;
-    if (!createKeyFile(strId + ".pem", "CVN node operator", "Block creator", strId, "test77", keyCVN)) {
+    if (!createKeyFile(strId + ".pem", "CVN node operator", "Block creator", strId, strPassword, keyCVN)) {
         fprintf(stderr, "ERROR: could not create CVN certificate\n");
         exit(0);
     }
@@ -101,7 +154,7 @@ int main(int argc, char* argv[])
     ss << hex << strId;
     ss >> nAdminId;
     CKey keyADMIN;
-    if (!createKeyFile(strId + ".pem", "CVN chain admin", "Chain data signer", strId, "test77", keyADMIN)) {
+    if (!createKeyFile(strId + ".pem", "CVN chain admin", "Chain data signer", strId, strPassword, keyADMIN)) {
         fprintf(stderr, "ERROR: could not create ADMIN certificate\n");
         exit(0);
     }
@@ -213,6 +266,8 @@ int main(int argc, char* argv[])
         cout << "\n\nChain data file " << strChainNmae << ".json " << "successfully generated." << endl;
     }
 
+    strPassword.clear();
+    memset((void *)&keyAlert.begin()[0], 0, 32);
     memset((void *)&keyCVN.begin()[0], 0, 32);
     memset((void *)&keyADMIN.begin()[0], 0, 32);
 

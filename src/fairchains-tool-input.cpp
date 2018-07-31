@@ -55,7 +55,7 @@ static string array2Str(const vector<string>& vValues)
     return out;
 }
 
-void prompt4StringArray(UniValue &out, const string &fieldName, const string &prompt, const vector<string> &vDefaultValue = vector<string>())
+void prompt4StringArray(UniValue &out, const string &fieldName, const string &prompt, const vector<string> &vDefaultValue)
 {
     bool fDone = false;
     string strVal;

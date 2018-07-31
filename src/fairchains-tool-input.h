@@ -9,7 +9,7 @@
 #include <vector>
 
 extern void prompt4String(UniValue &out, const std::string &fieldName, const std::string &prompt, const std::string &defaultValue);
-extern void prompt4StringArray(UniValue &out, const std::string &fieldName, const std::string &prompt, const std::vector<std::string> &vDefaultValue);
+extern void prompt4StringArray(UniValue &out, const std::string &fieldName, const std::string &prompt, const std::vector<std::string> &vDefaultValue = vector<string>());
 extern int prompt4Integer(UniValue &out, const std::string &fieldName, const std::string &prompt, const int &defaultValue = -1, bool (*cbCheckValueInt)(const int nVal) = NULL);
 extern void prompt4Hex(UniValue &out, const std::string &fieldName, const std::string &prompt, const std::string &defaultValue);
 extern void prompt4FixedSeeds(UniValue &out, const std::string &fieldName, const std::string &prompt, const uint16_t nPort, const std::vector<std::string> &vDefaultValue = std::vector<std::string>());
