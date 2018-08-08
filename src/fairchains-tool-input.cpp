@@ -116,7 +116,7 @@ int prompt4Integer(UniValue &out, const string &fieldName, const string &prompt,
         cout << ": ";
         flush(cout);
         string strVal;
-        getline (cin, strVal);
+        getline(cin, strVal);
 
         if (strVal == "") {
             if (defaultValue == -1) {
@@ -134,6 +134,47 @@ int prompt4Integer(UniValue &out, const string &fieldName, const string &prompt,
         }
 
         if (cbCheckValueInt && !cbCheckValueInt(nVal)) {
+            continue;
+        }
+
+        fDone = true;
+    } while(!fDone);
+
+    out.push_back(Pair(fieldName, nVal));
+    return nVal;
+}
+
+double prompt4Double(UniValue &out, const string &fieldName, const string &prompt, const double &defaultValue = -1, bool (*cbCheckValueDouble)(const double nVal) = NULL)
+{
+    bool fDone = false;
+    double nVal = 0;
+
+    do {
+        cout << prompt;
+        if (defaultValue != -1) {
+            cout << " (" << defaultValue << ")";
+        }
+        cout << ": ";
+        flush(cout);
+        string strVal;
+        getline(cin, strVal);
+
+        if (strVal == "") {
+            if (defaultValue == -1) {
+                cout << "--> please enter a value." << endl;
+                continue;
+            }
+            nVal = defaultValue;
+        } else {
+            try {
+                nVal = stod(strVal, NULL);
+            } catch(...) {
+                cout << "--> input invalid." << endl;
+                continue;
+            }
+        }
+
+        if (cbCheckValueDouble && !cbCheckValueDouble(nVal)) {
             continue;
         }
 

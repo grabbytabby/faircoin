@@ -76,6 +76,9 @@ static const string strInstructions =
 "  ##  which  contains all  required information  ##\n"
 "  ##  to run a public/private  blockchain based  ##\n"
 "  ##  on  the   FairChains   wallet   software.  ##\n"
+"  ##  Certificates  for  the  genesis  CVN  and  ##\n"
+"  ##  Admin are created in  the current working  ##\n"
+"  ##  directory as well.                         ##\n"
 "  ##                                             ##\n"
 "  ##  For  more information about the  required  ##\n"
 "  ##  input parameters visit:                    ##\n"
@@ -112,6 +115,8 @@ int main(int argc, char* argv[])
     prompt4String(data, "chainName", "Chain name", "mychain");
     const string strChainNmae = data["chainName"].getValStr();
 
+    prompt4Double(data, "maxMoney", "Maximum amount of coins (money supply) in the blockchain", 1000000);
+
     prompt4Hex(data, "networkMagic", "Network magic bytes", "0xfabfb5fa");
 
     CKey keyAlert;
@@ -130,7 +135,7 @@ int main(int argc, char* argv[])
     prompt4Integer(data, "secretKeyVersion", "Secret key version", p.Base58Prefix(CChainParams::SECRET_KEY)[0], checkByteSize);
     prompt4Hex(data, "extPubKeyPrefix", "Extended public key prefix", "0x0488b21e");
     prompt4Hex(data, "extSecretPrefix", "Extended secret key prefix", "0x0488ade4");
-    prompt4Bool(data, "requireStandardTx", "require standard transactions", true);
+    prompt4Bool(data, "requireStandardTx", "Require standard transactions", true);
     uint32_t nStartTime = prompt4Integer(data, "blockchainStartTime", "Blockchain start unix timestamp", (int) time(NULL));
     prompt4Hex(data, "genesisCvnID", "Id of the genesis CVN", "0xc0ff0001");
     prompt4Hex(data, "genesisAdminID", "Id of the genesis chain admin", "0xadff0001");
@@ -164,20 +169,20 @@ int main(int argc, char* argv[])
     UniValue dynParams(UniValue::VOBJ);
     CDynamicChainParams dcp;
 
-    dcp.nMinAdminSigs                = prompt4Integer(dynParams, "minAdminSigs", "Minimum admin signers", 1);
-    dcp.nMaxAdminSigs                = prompt4Integer(dynParams, "maxAdminSigs", "Maximum admin signers", 11);
+    dcp.nMinAdminSigs                = 1;        dynParams.push_back(Pair("minAdminSigs", 1));
+    dcp.nMaxAdminSigs                = 1;        dynParams.push_back(Pair("maxAdminSigs", 1));
     dcp.nBlockSpacing                = prompt4Integer(dynParams, "blockSpacing", "Block spacing time - in seconds", 180);
     dcp.nBlockSpacingGracePeriod     = prompt4Integer(dynParams, "blockSpacingGracePeriod", "Block spacing grace period time - in seconds", 60);
-    dcp.nTransactionFee              = prompt4Integer(dynParams, "transactionFee", "Transaction fee", 0);
-    dcp.nDustThreshold               = prompt4Integer(dynParams, "dustThreshold", "Dust threshold", 0);
-    dcp.nMinSuccessiveSignatures     = prompt4Integer(dynParams, "minSuccessiveSignatures", "Minimum successive signatures", 1);
-    dcp.nBlocksToConsiderForSigCheck = prompt4Integer(dynParams, "blocksToConsiderForSigCheck", "Blocks to consider for signature check", 1);
-    dcp.nPercentageOfSignaturesMean  = prompt4Integer(dynParams, "percentageOfSignaturesMean", "Percentage of signatures mean", 70);
+    dcp.nTransactionFee              = prompt4Integer(dynParams, "transactionFee", "Transaction fee in Satoshis", 0);
+    dcp.nDustThreshold               = prompt4Integer(dynParams, "dustThreshold", "Dust threshold in Satoshis", 0);
+    dcp.nMinSuccessiveSignatures     = 1;        dynParams.push_back(Pair("minSuccessiveSignatures", 1));
+    dcp.nBlocksToConsiderForSigCheck = 1;        dynParams.push_back(Pair("blocksToConsiderForSigCheck", 1));
+    dcp.nPercentageOfSignaturesMean  = 70;       dynParams.push_back(Pair("percentageOfSignaturesMean", 70));
     dcp.nMaxBlockSize                = prompt4Integer(dynParams, "maxBlockSize", "Maximum block size", 1500000);
     dcp.nBlockPropagationWaitTime    = prompt4Integer(dynParams, "blockPropagationWaitTime", "Block propagation wait time", 50);
     dcp.nRetryNewSigSetInterval      = prompt4Integer(dynParams, "retryNewSigSetInterval", "Retry new signature set interval", 15);
     dcp.nCoinbaseMaturity            = prompt4Integer(dynParams, "coinbaseMaturity", "Coinbase maturity - in blocks", 10);
-    prompt4String(dynParams, "description", "Description", "#00001 https://fair-coin.org/ The genesis dynamic chain parameters");
+    prompt4String(dynParams, "description", "Description", "#00001 no-URI The genesis dynamic chain parameters");
     dcp.strDescription               = dynParams["description"].getValStr();
 
     if (!CheckDynamicChainParameters(dcp)) {

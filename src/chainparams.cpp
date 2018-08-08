@@ -20,6 +20,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
+#include <univalue.h>
+
 CDynamicChainParams dynParams;
 string strChainName;
 
@@ -342,21 +344,23 @@ public:
         strNetworkID = "custom";
     }
 
-    bool isInitialised()
-    {
-        return fInitialised;
-    }
-
-    void init(const string &chainName)
+    void init(const string &chainName, const CAmount &MaxMoney)
     {
         strChainName = chainName;
         fInitialised = true;
+        nMaxMoney    = MaxMoney;
     }
+
+    bool isInitialised() { return fInitialised; }
+    const string &ChainName() { return strChainName; }
+    CAmount MaxMoney() { return nMaxMoney; }
 
 private:
     bool fInitialised = false;
     string strChainName;
+    CAmount nMaxMoney;
 };
+
 static CCustomParams customParams;
 
 static uint32_t str2Uint32(const UniValue& param)
@@ -434,6 +438,13 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
         return false;
     }
     p.SetNetworkIDString("custom");
+
+    CHECK_PARAM("maxMoney", UniValue::VNUM, valNetDef);
+    CAmount nMaxMoney = param.get_real() * COIN;
+    if (nMaxMoney < 0 || nMaxMoney >= std::numeric_limits<double>::max()) {
+        fprintf(stderr, "maxMoney out of range\n");
+        return false;
+    }
 
     CHECK_PARAM("networkMagic", UniValue::VSTR, valNetDef);
     p.SetMessageStart(str2Uint32(param));
@@ -663,6 +674,9 @@ bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileName, co
 
     if (hashData != hashCheck) {
         fprintf(stderr, "ERROR: file %s most probably corrupted. Hash check failed.\n", pFileName);
+        if (param.getValStr().empty()) {
+            fprintf(stderr, "HASH: %s\n", hashData.ToString().c_str());
+        }
         return false;
     }
 
@@ -748,7 +762,12 @@ CChainParams& Params(const std::string& chain)
                 throw std::runtime_error(strprintf("%s: error could not initialise custom parameters", __func__));
             }
 
-            customParams.init(valNetDef["chainName"].getValStr());
+            const UniValue uniData = valNetDef["data"];
+            if (uniData["chainName"].getValStr() != GetArg("-netname", "")) {
+                throw std::runtime_error(strprintf("%s: error chain name does not match (%s <> %s)", __func__, uniData["chainName"].getValStr(), GetArg("-netname", "")));
+            }
+
+            customParams.init(uniData["chainName"].getValStr(), uniData["maxMoney"].get_real() * COIN);
         }
         return customParams;
     }
@@ -821,4 +840,13 @@ bool CheckDynamicChainParameters(const CDynamicChainParams& params)
     }
 
     return true;
+}
+
+CAmount GetMaxMoney()
+{
+    if (Params().NetworkIDString() != CBaseChainParams::CUSTOM) {
+        return MAX_MONEY;
+    }
+
+    return customParams.MaxMoney();
 }

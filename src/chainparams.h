@@ -11,7 +11,7 @@
 #include "primitives/block.h"
 #include "protocol.h"
 
-#include <univalue.h>
+class UniValue;
 
 #include <vector>
 
@@ -134,5 +134,6 @@ CChainParams& Params(const std::string& chain);
  * @throws std::runtime_error when the chain is not supported.
  */
 void SelectParams(const std::string& chain);
+CAmount GetMaxMoney();
 
 #endif // BITCOIN_CHAINPARAMS_H

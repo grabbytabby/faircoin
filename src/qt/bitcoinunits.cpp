@@ -8,6 +8,8 @@
 
 #include <QStringList>
 
+extern CAmount GetMaxMoney();
+
 BitcoinUnits::BitcoinUnits(QObject *parent):
         QAbstractListModel(parent),
         unitlist(availableUnits())
@@ -209,5 +211,5 @@ QVariant BitcoinUnits::data(const QModelIndex &index, int role) const
 
 CAmount BitcoinUnits::maxMoney()
 {
-    return MAX_MONEY;
+    return GetMaxMoney();
 }
