@@ -20,6 +20,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/assign/list_of.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 using namespace std;
 
@@ -64,6 +65,70 @@ string requestPassword()
     return strPassword;
 }
 
+int SignJSONFile(const string &strFileName)
+{
+    fprintf(stdout, "Reading custom chain parameters from file: %s\n", strFileName.c_str());
+
+    boost::filesystem::ifstream streamNetDef(strFileName);
+    if (!streamNetDef.good() || !boost::filesystem::exists(strFileName) || !boost::filesystem::is_regular(strFileName)) {
+        fprintf(stderr, "ERROR: could not find file %s\n", strFileName.c_str());
+        return 1;
+    }
+
+    std::string str((std::istreambuf_iterator<char>(streamNetDef)), std::istreambuf_iterator<char>());
+    UniValue valNetDef(UniValue::VOBJ);
+    if (!valNetDef.read(str)) {
+        fprintf(stderr, "ERROR: could not parse file %s\n", strFileName.c_str());
+        return 1;
+    }
+
+    if (!InitialiseCustomParams(valNetDef, strFileName.c_str(), false)) {
+        fprintf(stderr, "ERROR: file %s is invalid\n", strFileName.c_str());
+        return 1;
+    }
+
+    if (fOfficialFairChain) {
+        fprintf(stderr, "This file is already signed! Nothing to do.\n");
+        return 2;
+    }
+
+    string strFullName;
+    const uint256 hashData = uint256S(valNetDef["hash"].getValStr());
+    CHashWriter hasherSig(SER_GETHASH, 0);
+    hasherSig << hashData;
+
+    cout << "Enter your full name: ";
+    flush(cout);
+    getline(cin, strFullName);
+
+    time_t now = time(0);
+    tm *gmtm = gmtime(&now);
+    char cTime[32];
+    asctime_r(gmtm, cTime);
+    cTime[strlen(cTime) - 1] = 0; // strip the "\n"
+
+    const string strComment("signed by " + strFullName + " on " + string(cTime) + " UTC");
+
+    const UniValue& valSign = valNetDef["sign"];
+    UniValue& valComment = (UniValue &) valSign["comment"];
+    UniValue& valSignedHash = (UniValue &) valSign["signedhash"];
+    UniValue& valSignature = (UniValue &) valSign["signature"];
+
+    valComment.setStr(strComment);
+
+    hasherSig << strComment;
+
+    uint256 hashSig = hasherSig.GetHash();
+
+    valSignedHash.setStr(hashSig.ToString());
+
+    valSignature.setStr("TBI!!");
+
+    cout << valNetDef.write(4, 0) << endl;
+
+    return 0;
+}
+
 static const string strInstructions =
 "  #################################################\n"
 "  ##                                             ##\n"
@@ -100,6 +165,10 @@ int main(int argc, char* argv[])
     fPrintToConsole = true;
 
     ecc.reset(new Secp256k1Init());
+
+    if (argc == 3 && !strcmp("-sign", argv[1])) {
+        return SignJSONFile(string(argv[2]));
+    }
 
     CChainParams p = Params("main");
 
