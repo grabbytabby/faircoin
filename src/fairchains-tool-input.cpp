@@ -25,7 +25,7 @@ void prompt4String(UniValue &out, const string &fieldName, const string &prompt,
         }
         cout << ": ";
         flush(cout);
-        getline (cin, strVal);
+        getline(cin, strVal);
 
         if (strVal == "") {
             if (defaultValue == "") {
@@ -71,7 +71,7 @@ void prompt4StringArray(UniValue &out, const string &fieldName, const string &pr
             }
             cout << ":" << endl;
         }
-        getline (cin, strVal);
+        getline(cin, strVal);
 
         if (strVal == "") {
             cout << "--> please enter a value." << endl;
@@ -197,7 +197,7 @@ void prompt4Hex(UniValue &out, const string &fieldName, const string &prompt, co
         }
         cout << ": ";
         flush(cout);
-        getline (cin, strVal);
+        getline(cin, strVal);
 
         if (strVal == "") {
             if (defaultValue == "") {
@@ -327,7 +327,7 @@ void prompt4FixedSeeds(UniValue &out, const string &fieldName, const string &pro
             }
             cout << ":" << endl;
         }
-        getline (cin, strVal);
+        getline(cin, strVal);
 
         if (strVal == "") {
             cout << "--> please enter a value." << endl;
@@ -380,7 +380,7 @@ void prompt4Bool(UniValue &out, const string &fieldName, const string &prompt, c
         cout << " (" << (defaultValue ? "true" : "false") << ")";
         cout << ": ";
         flush(cout);
-        getline (cin, strVal);
+        getline(cin, strVal);
 
         if (strVal == "") {
             fValue = defaultValue;

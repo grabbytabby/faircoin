@@ -25,6 +25,15 @@
 CDynamicChainParams dynParams;
 string strChainName;
 
+static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::list_of
+   (CSchnorrPubKeyDER("04a2bb310b665a2479666b0b4e591cce3ddede393a26954bf1b0ebd37a1b666cb2acb4396bcdeeec15d9aabaae3477122aa7a0286049e338ca5237f33b0f9ad31e"))
+   (CSchnorrPubKeyDER("04d7175ec64a05994dd85e95127ecdaffc2f2135b2b72255bca9c0c002b23e0607b947629d59712bfa66d1c8b499333ca1625da054ad281f1767e7e5e42c565f54"))
+   (CSchnorrPubKeyDER("04e5c6ac56aaef040a85c69178c3e5954f33f737c66a56f114d5677aba39bb8563dba21852eaa06dcb5ea872537a7e12d56f952fd7f28d965c6c8d6dcedd9e1e2c"))
+   (CSchnorrPubKeyDER("04c4e45566572136ad9f310f7d56a2aa72a1d1039e92dbfe25eba90bf90e96223e7ee08157f8a5c7893266d73e4bba9be76f0e4af474684157623e817be99f3ade"))
+;
+
+bool fOfficialFairChain = false;
+
 #define SHOW_GENESIS_HASHES 0
 
 #if SHOW_GENESIS_HASHES
@@ -622,15 +631,6 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
     return true;
 }
 
-static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::list_of
-   (CSchnorrPubKeyDER("04a2bb310b665a2479666b0b4e591cce3ddede393a26954bf1b0ebd37a1b666cb2acb4396bcdeeec15d9aabaae3477122aa7a0286049e338ca5237f33b0f9ad31e"))
-   (CSchnorrPubKeyDER("04d7175ec64a05994dd85e95127ecdaffc2f2135b2b72255bca9c0c002b23e0607b947629d59712bfa66d1c8b499333ca1625da054ad281f1767e7e5e42c565f54"))
-   (CSchnorrPubKeyDER("04e5c6ac56aaef040a85c69178c3e5954f33f737c66a56f114d5677aba39bb8563dba21852eaa06dcb5ea872537a7e12d56f952fd7f28d965c6c8d6dcedd9e1e2c"))
-   (CSchnorrPubKeyDER("04c4e45566572136ad9f310f7d56a2aa72a1d1039e92dbfe25eba90bf90e96223e7ee08157f8a5c7893266d73e4bba9be76f0e4af474684157623e817be99f3ade"))
-;
-
-bool fOfficialFairChain = false;
-
 static bool ReadCustomParams(UniValue &valNetDef)
 {
     const std::string strNetName = GetArg("-netname", "");
@@ -711,10 +711,12 @@ bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileName, co
         ECCVerifyHandle *ptrHandle = new ECCVerifyHandle();
         bool fGoodSignature = false;
 
+        int nIdx = 0;
         BOOST_FOREACH(const CSchnorrPubKey &pubKey, officialChainParamPubKeys) {
+            ++nIdx;
             fGoodSignature = CPubKey::VerifySchnorr(hashSig, sigData, pubKey);
             if (fGoodSignature) {
-                fprintf(stderr, "Successfully verified signature of file %s. This is an official FairChain.\n", pFileName);
+                fprintf(stderr, "Successfully verified signature of file %s with key #%d. This is an official FairChain.\n", pFileName, nIdx);
                 fOfficialFairChain = true;
                 break;
             }
