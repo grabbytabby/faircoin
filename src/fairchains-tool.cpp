@@ -17,6 +17,8 @@
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/ec.h>
+#include <openssl/pem.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/assign/list_of.hpp>
@@ -65,7 +67,7 @@ string requestPassword()
     return strPassword;
 }
 
-int SignJSONFile(const string &strFileName)
+int SignJSONFile(const string &strFileName, const string &strKeyFile)
 {
     fprintf(stdout, "Reading custom chain parameters from file: %s\n", strFileName.c_str());
 
@@ -115,16 +117,52 @@ int SignJSONFile(const string &strFileName)
     UniValue& valSignature = (UniValue &) valSign["signature"];
 
     valComment.setStr(strComment);
-
     hasherSig << strComment;
 
     uint256 hashSig = hasherSig.GetHash();
-
     valSignedHash.setStr(hashSig.ToString());
 
-    valSignature.setStr("TBI!!");
+    BIO *bioKey = BIO_new(BIO_s_file());
+    if (!BIO_read_filename(bioKey, strKeyFile.c_str())) {
+        fprintf(stderr, "ERROR: key file not found: %s\n", strKeyFile.c_str());
+        return 1;
+    }
 
-    cout << valNetDef.write(4, 0) << endl;
+    EC_KEY *ecKey = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (!PEM_read_bio_ECPrivateKey(bioKey, &ecKey, NULL, NULL)) {
+        fprintf(stderr, "ERROR: could not read private key from file %s.\n", strKeyFile.c_str());
+        return 1;
+    }
+
+    const BIGNUM *bnPrivKey = EC_KEY_get0_private_key(ecKey);
+    uint8_t buf[256];
+    size_t sKeyLen = BN_bn2bin(bnPrivKey, buf);
+    const vector<uint8_t> data(buf, buf + sKeyLen);
+
+    CKey key;
+    key.Set(data.begin(), data.end(), false);
+
+    CSchnorrSig signature;
+    if (!key.SchnorrSign(hashSig, signature)) {
+        fprintf(stderr, "ERROR: could not create signature");
+        return 1;
+    }
+
+    valSignature.setStr(signature.ToString());
+
+    ofstream out(strFileName);
+
+    if (!out) {
+        cerr << "\nERROR: could not save file " << strFileName << ": " << strerror(errno) << endl;
+    } else {
+        out << valNetDef.write(4, 0) << endl;
+        out.close();
+
+        cout << "\nChain data file " << strFileName << " successfully signed." << endl;
+    }
+
+    EC_KEY_free(ecKey);
+    BIO_free_all(bioKey);
 
     return 0;
 }
@@ -166,8 +204,11 @@ int main(int argc, char* argv[])
 
     ecc.reset(new Secp256k1Init());
 
-    if (argc == 3 && !strcmp("-sign", argv[1])) {
-        return SignJSONFile(string(argv[2]));
+    if (argc == 5 && !strcmp("-sign", argv[1]) && !strcmp("-key", argv[3])) {
+        return SignJSONFile(string(argv[2]), string(argv[4]));
+    } else if (argc > 1) {
+        fprintf(stderr, "ERROR: invalid arguments.\n");
+        return -1;
     }
 
     CChainParams p = Params("main");
