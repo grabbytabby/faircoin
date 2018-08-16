@@ -208,7 +208,7 @@ bool CFasito::login(const string& strPassword, string &strError)
             return false;
         }
     } catch(const std::exception &e) {
-        strprintf(strError, "failed to send login command: %s", e.what());
+        strError = strprintf("failed to send login command: %s", e.what());
         return false;
     }
 
@@ -472,7 +472,7 @@ uint32_t InitChainAdminWithFasito(const string& strPassword, const uint32_t nKey
     }
 
     if (nKeyIndex > 6) {
-        strprintf(strError, "invalid value for adminkeyindex: %d", nKeyIndex);
+        strError = strprintf("invalid value for adminkeyindex: %d", nKeyIndex);
         LogPrintf("%s\n", strError);
         if (!fWasInitialised)
             fasito.close();
@@ -480,7 +480,7 @@ uint32_t InitChainAdminWithFasito(const string& strPassword, const uint32_t nKey
     }
 
     if (!fasito.mapKeys.count(nKeyIndex)) {
-        strprintf(strError, "key #%d not found on Fasito", nKeyIndex);
+        strError = strprintf("key #%d not found on Fasito", nKeyIndex);
         LogPrintf("%s\n", strError);
         if (!fWasInitialised)
             fasito.close();
@@ -489,7 +489,7 @@ uint32_t InitChainAdminWithFasito(const string& strPassword, const uint32_t nKey
 
     CFasitoKey &fasitoKeys = fasito.mapKeys[nKeyIndex];
     if (fasitoKeys.status != CONFIGURED) {
-        strprintf(strError, "key #%d not configured on Fasito", nKeyIndex);
+        strError = strprintf("key #%d not configured on Fasito", nKeyIndex);
         LogPrintf("%s\n", strError);
         if (!fWasInitialised)
             fasito.close();
