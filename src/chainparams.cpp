@@ -24,6 +24,8 @@
 
 CDynamicChainParams dynParams;
 string strChainName;
+string strCustomCurrencyName = "FairCoin";
+string strCustomCurrencySymbol = "FAIR";
 
 static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::list_of
    (CSchnorrPubKeyDER("04a2bb310b665a2479666b0b4e591cce3ddede393a26954bf1b0ebd37a1b666cb2acb4396bcdeeec15d9aabaae3477122aa7a0286049e338ca5237f33b0f9ad31e"))
@@ -33,6 +35,7 @@ static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::li
 ;
 
 bool fOfficialFairChain = false;
+bool fCustomChain = false;
 
 #define SHOW_GENESIS_HASHES 0
 
@@ -440,9 +443,23 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
         return false;
     }
 
+    CHECK_PARAM("currencyName", UniValue::VSTR, valNetDef);
+    strCustomCurrencyName = param.getValStr();
+    if (strCustomCurrencyName.empty() || strCustomCurrencyName.size() > 24) {
+        fprintf(stderr, "currencyName is empty or too long\n");
+        return false;
+    }
+
+    CHECK_PARAM("currencySymbol", UniValue::VSTR, valNetDef);
+    strCustomCurrencySymbol = param.getValStr();
+    if (strCustomCurrencySymbol.empty() || strCustomCurrencySymbol.size() > 8) {
+        fprintf(stderr, "currencySymbol is empty or too long\n");
+        return false;
+    }
+
     CHECK_PARAM("chainName", UniValue::VSTR, valNetDef);
     strChainName = param.getValStr();
-    if (strChainName.empty() || strChainName.size() > 64) {
+    if (strChainName.empty() || strChainName.size() > 24) {
         fprintf(stderr, "chainName is empty or too long\n");
         return false;
     }
@@ -754,6 +771,8 @@ CChainParams& Params(const std::string& chain)
         return regTestParams;
     else if (chain == CBaseChainParams::CUSTOM) {
         if (!customParams.isInitialised()) {
+            fCustomChain = true;
+
             UniValue valNetDef(UniValue::VOBJ); // network definition information in JSON format
 
             if (!ReadCustomParams(valNetDef)) {

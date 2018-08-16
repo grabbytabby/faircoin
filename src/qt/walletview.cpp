@@ -72,7 +72,7 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     QVBoxLayout *txvbox = new QVBoxLayout();
     txTabHolder = new QTabWidget();
     txTabHolder->addTab(mpTXTab,tr("FairChains"));
-    txTabHolder->addTab(bitcoinTXTab,tr("FairCoin"));
+    txTabHolder->addTab(bitcoinTXTab,tr(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"));
     txvbox->addWidget(txTabHolder);
     transactionsPage->setLayout(txvbox);
 
@@ -89,7 +89,7 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     sendMPTab = new SendMPDialog(platformStyle);
     sendTabHolder = new QTabWidget();
     sendTabHolder->addTab(sendMPTab,tr("FairChains"));
-    sendTabHolder->addTab(sendCoinsTab,tr("FairCoin"));
+    sendTabHolder->addTab(sendCoinsTab,tr(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"));
     svbox->addWidget(sendTabHolder);
     sendCoinsPage->setLayout(svbox);
 

@@ -222,15 +222,18 @@ int main(int argc, char* argv[])
 
     string strPassword = requestPassword();
 
-    prompt4String(data, "chainName", "Chain name", "mychain");
-    const string strChainNmae = data["chainName"].getValStr();
+    prompt4String(data, "chainName", "Chain name", "mychain", 24);
+    const string strChainName = data["chainName"].getValStr();
+
+    prompt4String(data, "currencyName", "Currency name", "FairCoin", 24);
+    prompt4String(data, "currencySymbol", "Currency symbol", "FAIR", 8);
 
     prompt4Double(data, "maxMoney", "Maximum amount of coins (money supply) in the blockchain", 1000000);
 
     prompt4Hex(data, "networkMagic", "Network magic bytes", "0xfabfb5fa");
 
     CKey keyAlert;
-    if (!createKeyFile("alert-" + strChainNmae + ".pem", "FairChains network", "Alert signer", "alert", strPassword, keyAlert)) {
+    if (!createKeyFile("alert-" + strChainName + ".pem", "FairChains network", "Alert signer", "alert", strPassword, keyAlert)) {
         fprintf(stderr, "ERROR: could not create CVN certificate\n");
         exit(0);
     }
@@ -292,7 +295,7 @@ int main(int argc, char* argv[])
     dcp.nBlockPropagationWaitTime    = prompt4Integer(dynParams, "blockPropagationWaitTime", "Block propagation wait time", 50);
     dcp.nRetryNewSigSetInterval      = prompt4Integer(dynParams, "retryNewSigSetInterval", "Retry new signature set interval", 15);
     dcp.nCoinbaseMaturity            = prompt4Integer(dynParams, "coinbaseMaturity", "Coinbase maturity - in blocks", 10);
-    prompt4String(dynParams, "description", "Description", "#00001 no-URI The genesis dynamic chain parameters");
+    prompt4String(dynParams, "description", "Description", "#00001 no-URI The genesis dynamic chain parameters", MIN_CHAIN_DATA_DESCRIPTION_LEN);
     dcp.strDescription               = dynParams["description"].getValStr();
 
     if (!CheckDynamicChainParameters(dcp)) {
@@ -369,16 +372,16 @@ int main(int argc, char* argv[])
 
     root.push_back(Pair("sign", sign));
 
-    InitialiseCustomParams(root, (strChainNmae + ".json").c_str(), false);
+    InitialiseCustomParams(root, (strChainName + ".json").c_str(), false);
 
-    ofstream out(strChainNmae + ".json");
+    ofstream out(strChainName + ".json");
     if (!out) {
-        cerr << "\ncould not save file " + strChainNmae + ".json" << ": " << strerror(errno) << endl;
+        cerr << "\ncould not save file " + strChainName + ".json" << ": " << strerror(errno) << endl;
     } else {
         out << root.write(4, 0) << endl;
         out.close();
 
-        cout << "\n\nChain data file " << strChainNmae << ".json " << "successfully generated." << endl;
+        cout << "\n\nChain data file " << strChainName << ".json " << "successfully generated." << endl;
     }
 
     strPassword.clear();

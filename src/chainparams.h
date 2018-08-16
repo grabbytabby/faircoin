@@ -22,7 +22,10 @@ extern CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nCreatorId, const CDyn
 extern bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileName, const bool fUnsignedPenalty = true);
 
 extern string strChainName;
+extern string strCustomCurrencyName;
+extern string strCustomCurrencySymbol;
 extern bool fOfficialFairChain;
+extern bool fCustomChain;
 
 struct CDNSSeedData {
     std::string name, host;

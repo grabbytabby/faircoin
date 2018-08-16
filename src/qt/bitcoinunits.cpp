@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "bitcoinunits.h"
+#include "chainparams.h"
 
 #include "primitives/transaction.h"
 
@@ -37,25 +38,29 @@ bool BitcoinUnits::valid(int unit)
         return false;
     }
 }
-
+//fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"
 QString BitcoinUnits::name(int unit)
 {
     switch(unit)
     {
-    case BTC: return QString("FAIR");
-    case mBTC: return QString("mFAIR");
-    case uBTC: return QString::fromUtf8("μFAIR");
+    case BTC: return QString(fCustomChain ? strCustomCurrencySymbol.c_str() : "FAIR");
+    case mBTC: return QString("m").append(fCustomChain ? strCustomCurrencySymbol.c_str() : "FAIR");
+    case uBTC: return QString::fromUtf8("μ").append(fCustomChain ? strCustomCurrencySymbol.c_str() : "FAIR");
     default: return QString("???");
     }
+
+    QString s;
+
+    s += s;
 }
 
 QString BitcoinUnits::description(int unit)
 {
     switch(unit)
     {
-    case BTC: return QString("FairCoins");
-    case mBTC: return QString("Milli-FairCoins (1 / 1" THIN_SP_UTF8 "000)");
-    case uBTC: return QString("Micro-FairCoins (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case BTC: return QString(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin").append("s");
+    case mBTC: return QString("Milli-").append(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin").append("s (1 / 1" THIN_SP_UTF8 "000)");
+    case uBTC: return QString("Micro-").append(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin").append("s (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     default: return QString("???");
     }
 }

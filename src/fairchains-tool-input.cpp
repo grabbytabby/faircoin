@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void prompt4String(UniValue &out, const string &fieldName, const string &prompt, const string &defaultValue = "")
+void prompt4String(UniValue &out, const string &fieldName, const string &prompt, const string &defaultValue = "", const int nMaxLength = -1)
 {
     bool fDone = false;
     string strVal;
@@ -33,6 +33,9 @@ void prompt4String(UniValue &out, const string &fieldName, const string &prompt,
                 continue;
             }
             strVal = defaultValue;
+        } else if (nMaxLength != -1 && strVal.length() > nMaxLength) {
+            cout << "--> string too long. Max: " << nMaxLength << endl;
+            continue;
         }
 
         fDone = true;
