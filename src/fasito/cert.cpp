@@ -169,7 +169,7 @@ uint32_t InitChainAdminWithCertificate(const string& strPassword, string &strErr
     boost::filesystem::path privkeyFile = GetDataDir() / GetArg("-adminkeyfile", "admin.pem");
     FILE* file = fopen(privkeyFile.string().c_str(), "r");
     if (!file) {
-        strprintf(strError, "key file not found: %s, is -adminkeyfile set correctly?", privkeyFile);
+        strError = strprintf("key file not found: %s, is -adminkeyfile set correctly?", privkeyFile);
         LogPrintf("%s\n", strError);
         return 0;
     }
