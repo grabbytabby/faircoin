@@ -546,6 +546,11 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
             // initialize the disable state of the tray icon with the current value in the model.
             setTrayIconVisible(optionsModel->getHideTrayIcon());
         }
+
+        if (clientModel->fHideFairChains) {
+            balancesAction->setVisible(false);
+            toolboxAction->setVisible(false);
+        }
     } else {
         // Disable possibility to show main window via action
         toggleHideAction->setEnabled(false);
@@ -563,7 +568,7 @@ bool BitcoinGUI::addWallet(const QString& name, WalletModel *walletModel)
     if(!walletFrame)
         return false;
     setWalletActionsEnabled(true);
-    return walletFrame->addWallet(name, walletModel);
+    return walletFrame->addWallet(name, walletModel, clientModel->fHideFairChains);
 }
 
 bool BitcoinGUI::setCurrentWallet(const QString& name)

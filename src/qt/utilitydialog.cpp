@@ -88,6 +88,7 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
         if (showDebug) {
             strUsage += HelpMessageOpt("-uiplatform", strprintf("Select platform to customize UI for (one of windows, macosx, other; default: %s)", BitcoinGUI::DEFAULT_UIPLATFORM));
         }
+        strUsage += HelpMessageOpt("-hidefairchains", tr("Do not display FairChains smart properties (Omnilayer) in the GUI").toStdString());
         QString coreOptions = QString::fromStdString(strUsage);
         text = version + "\n" + header + "\n" + coreOptions;
 

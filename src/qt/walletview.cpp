@@ -42,7 +42,7 @@
 #include <QTableView>
 #include <QVBoxLayout>
 
-WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
+WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, const bool fHideFairChains):
     QStackedWidget(parent),
     clientModel(0),
     walletModel(0),
@@ -71,7 +71,9 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     transactionsPage = new QWidget(this);
     QVBoxLayout *txvbox = new QVBoxLayout();
     txTabHolder = new QTabWidget();
-    txTabHolder->addTab(mpTXTab,tr("FairChains"));
+    if (!fHideFairChains) {
+        txTabHolder->addTab(mpTXTab,tr("FairChains"));
+    }
     txTabHolder->addTab(bitcoinTXTab,tr(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"));
     txvbox->addWidget(txTabHolder);
     transactionsPage->setLayout(txvbox);
@@ -88,7 +90,9 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     sendCoinsTab = new SendCoinsDialog(platformStyle);
     sendMPTab = new SendMPDialog(platformStyle);
     sendTabHolder = new QTabWidget();
-    sendTabHolder->addTab(sendMPTab,tr("FairChains"));
+    if (!fHideFairChains) {
+        sendTabHolder->addTab(sendMPTab,tr("FairChains"));
+    }
     sendTabHolder->addTab(sendCoinsTab,tr(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"));
     svbox->addWidget(sendTabHolder);
     sendCoinsPage->setLayout(svbox);

@@ -38,12 +38,12 @@ void WalletFrame::setClientModel(ClientModel *clientModel)
     this->clientModel = clientModel;
 }
 
-bool WalletFrame::addWallet(const QString& name, WalletModel *walletModel)
+bool WalletFrame::addWallet(const QString& name, WalletModel *walletModel, const bool fHideFairChains)
 {
     if (!gui || !clientModel || !walletModel || mapWalletViews.count(name) > 0)
         return false;
 
-    WalletView *walletView = new WalletView(platformStyle, this);
+    WalletView *walletView = new WalletView(platformStyle, this, fHideFairChains);
     walletView->setBitcoinGUI(gui);
     walletView->setClientModel(clientModel);
     walletView->setWalletModel(walletModel);

@@ -82,6 +82,7 @@ public:
     bool tryLockOmniStateChanged();
     bool tryLockOmniBalanceChanged();
 
+    bool fHideFairChains;
 private:
     OptionsModel *optionsModel;
     PeerTableModel *peerTableModel;
