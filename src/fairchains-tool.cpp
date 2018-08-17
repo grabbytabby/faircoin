@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
     const string strChainName = data["chainName"].getValStr();
 
     prompt4String(data, "currencyName", "Currency name", "FairCoin", 24);
-    prompt4String(data, "currencySymbol", "Currency symbol", "FAIR", 8);
+    prompt4String(data, "currencySymbol", "Currency symbol", "FAIR", 8, ensureUpperCase);
 
     prompt4Double(data, "maxMoney", "Maximum amount of coins (money supply) in the blockchain", 1000000);
 

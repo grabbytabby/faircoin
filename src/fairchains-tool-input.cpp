@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void prompt4String(UniValue &out, const string &fieldName, const string &prompt, const string &defaultValue = "", const int nMaxLength = -1)
+void prompt4String(UniValue &out, const string &fieldName, const string &prompt, const string &defaultValue = "", const int nMaxLength = -1, bool (*cbCheckValueStr)(string &strVal) = NULL)
 {
     bool fDone = false;
     string strVal;
@@ -33,8 +33,10 @@ void prompt4String(UniValue &out, const string &fieldName, const string &prompt,
                 continue;
             }
             strVal = defaultValue;
-        } else if (nMaxLength != -1 && strVal.length() > nMaxLength) {
+        } else if (nMaxLength != -1 && (int) strVal.length() > nMaxLength) {
             cout << "--> string too long. Max: " << nMaxLength << endl;
+            continue;
+        } else if (cbCheckValueStr && !cbCheckValueStr(strVal)) {
             continue;
         }
 
@@ -155,7 +157,8 @@ double prompt4Double(UniValue &out, const string &fieldName, const string &promp
     do {
         cout << prompt;
         if (defaultValue != -1) {
-            cout << " (" << defaultValue << ")";
+            string strDefVal = strprintf("%.8f", defaultValue);
+            cout << " (" << strDefVal << ")";
         }
         cout << ": ";
         flush(cout);
@@ -423,6 +426,13 @@ bool checkByteSize(const int nVal)
         cout << "--> value " << nVal << " out of range." << endl;
         return false;
     }
+
+    return true;
+}
+
+bool ensureUpperCase(string &strVal)
+{
+    boost::to_upper(strVal);
 
     return true;
 }
