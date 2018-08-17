@@ -67,7 +67,7 @@ void LookupTXDialog::searchTX()
         std::string strText = "The transaction hash entered is ";
         switch(populateResult) {
             case MP_TX_NOT_FOUND:
-                strText += "not a valid Bitcoin or Omni transaction.  Please check the transaction hash "
+                strText += "not a valid FairCoin or FairChains transaction.  Please check the transaction hash "
                            "entered and try again.";
             break;
             case MP_TX_UNCONFIRMED:
@@ -76,13 +76,13 @@ void LookupTXDialog::searchTX()
                            "transactions in the transactions tab.";
             break;
             case MP_TX_IS_NOT_MASTER_PROTOCOL:
-                strText += "a Bitcoin transaction only.\n\nTip: You can use the debug console "
-                           "'gettransaction' command to lookup specific Bitcoin transactions.";
+                strText += "a FairCoin transaction only.\n\nTip: You can use the debug console "
+                           "'gettransaction' command to lookup specific FairCoin transactions.";
             break;
 
             default:
                 strText += "of an unknown type.  If you are seeing this message please raise a bug report "
-                           "with the transaction hash at github.com/OmniLayer/omnicore/issues.";
+                           "with the transaction hash at github.com/FairChains/fairchains/issues.";
             break;
         }
         QString strQText = QString::fromStdString(strText);

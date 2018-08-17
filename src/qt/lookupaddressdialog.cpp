@@ -151,10 +151,10 @@ void LookupAddressDialog::searchAddress()
     {
         // update top fields
         ui->addressLabel->setText(QString::fromStdString(searchText));
-        if ((searchText.substr(0,1) == "1") || (searchText.substr(0,1) == "m") || (searchText.substr(0,1) == "n")) ui->addressTypeLabel->setText("Public Key Hash");
-        if ((searchText.substr(0,1) == "2") || (searchText.substr(0,1) == "3")) ui->addressTypeLabel->setText("Pay to Script Hash");
+        if ((searchText.substr(0,1) == "f") || (searchText.substr(0,1) == "m") || (searchText.substr(0,1) == "n")) ui->addressTypeLabel->setText("Public Key Hash");
+        if ((searchText.substr(0,1) == "F")) ui->addressTypeLabel->setText("Pay to Script Hash");
         if (IsMyAddress(searchText)) { ui->isMineLabel->setText("Yes"); } else { ui->isMineLabel->setText("No"); }
-        ui->balanceLabel->setText(QString::fromStdString(FormatDivisibleMP(getUserAvailableMPbalance(searchText, 1)) + " OMNI"));
+        ui->balanceLabel->setText(QString::fromStdString(FormatDivisibleMP(getUserAvailableMPbalance(searchText, 1)) + " SPT"));
         // QR
         #ifdef USE_QRCODE
         ui->QRCode->setText("");

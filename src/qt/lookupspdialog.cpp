@@ -290,15 +290,8 @@ void LookupSPDialog::updateDisplayedProperty()
         LOCK(cs_tally);
         walletTokens = global_balance_money[propertyId];
     }
-    string tokenLabel;
-    if (propertyId > 2)
-    {
-       tokenLabel = " SPT";
-    }
-    else
-    {
-       if (propertyId == 1) { tokenLabel = " OMNI"; } else { tokenLabel = " TOMNI"; }
-    }
+    string tokenLabel = " SPT";
+
     if (divisible) { strTotalTokens = FormatDivisibleMP(totalTokens); } else { strTotalTokens = FormatIndivisibleMP(totalTokens); }
     if (divisible) { strWalletTokens = FormatDivisibleMP(walletTokens); } else { strWalletTokens = FormatIndivisibleMP(walletTokens); }
     ui->totalTokensLabel->setText(QString::fromStdString(strTotalTokens + tokenLabel));
@@ -306,7 +299,7 @@ void LookupSPDialog::updateDisplayedProperty()
     ui->issuerLabel->setText(QString::fromStdString(sp.issuer));
     bool fixedIssuance = sp.fixed;
     bool manualIssuance = sp.manual;
-    if ((!fixedIssuance) && (!manualIssuance) && (propertyId > 2))
+    if ((!fixedIssuance) && (!manualIssuance))
     {
         ui->issuanceTypeLabel->setText("Crowdsale");
         // obtain crowdinfo
