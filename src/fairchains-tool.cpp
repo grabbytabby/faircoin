@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
 
     int nPort = prompt4Integer(data, "defaultPort", "Network TCP port", 49404, checkForValidPorts);
     prompt4StringArray(data, "seedNodes", "Seed nodes (One per line. End input by entering '.' + enter)");
-    prompt4FixedSeeds(data, "fixedSeeds", "IPv4 and IPv6 addresses of fixed seed nodes (One per line. End input by entering '.' + enter)", nPort);
+    prompt4FixedSeeds(data, "fixedSeeds", "IPv4 and/or IPv6 addresses of fixed seed nodes (One per line. End input by entering '.' + enter)", nPort);
     prompt4Integer(data, "pubKeyAddrVersion", "Public key address version", p.Base58Prefix(CChainParams::PUBKEY_ADDRESS)[0], checkByteSize);
     prompt4Integer(data, "scriptAddrVersion", "Script address version", p.Base58Prefix(CChainParams::SCRIPT_ADDRESS)[0], checkByteSize);
     prompt4Integer(data, "secretKeyVersion", "Secret key version", p.Base58Prefix(CChainParams::SECRET_KEY)[0], checkByteSize);
