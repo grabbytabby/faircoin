@@ -17,9 +17,7 @@
 #include "utiltime.h"
 
 #include <stdarg.h>
-#ifdef USE_CVN
 #include <termios.h>
-#endif // USE_CVN
 
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
 #include <pthread.h>
@@ -863,7 +861,6 @@ int GetNumCores()
 #endif
 }
 
-#ifdef USE_CVN
 void promptForPassword(const std::string &strPrompt, std::string &strPassword)
 {
     cout << strPrompt;
@@ -879,4 +876,3 @@ void promptForPassword(const std::string &strPrompt, std::string &strPassword)
     tcsetattr(STDIN_FILENO, TCSANOW, &t);
     cout << "\n";
 }
-#endif // USE_CVN
