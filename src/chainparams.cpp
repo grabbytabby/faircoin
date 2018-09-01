@@ -19,6 +19,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 
 #include <univalue.h>
 
@@ -26,6 +27,7 @@ CDynamicChainParams dynParams;
 string strChainName = "none";
 string strCurrencyName = "FairCoin";
 string strCurrencySymbol = "FAIR";
+string strURIscheme = "faircoin";
 
 static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::list_of
    (CSchnorrPubKeyDER("04a2bb310b665a2479666b0b4e591cce3ddede393a26954bf1b0ebd37a1b666cb2acb4396bcdeeec15d9aabaae3477122aa7a0286049e338ca5237f33b0f9ad31e"))
@@ -450,6 +452,8 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
         return false;
     }
 
+    strURIscheme = strCurrencyName;
+    boost::to_lower(strURIscheme);
 
     CHECK_PARAM("currencySymbol", UniValue::VSTR, valNetDef);
     strCurrencySymbol = param.getValStr();

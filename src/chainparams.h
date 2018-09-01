@@ -24,6 +24,7 @@ extern bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileN
 extern string strChainName;
 extern string strCurrencyName;
 extern string strCurrencySymbol;
+extern string strURIscheme;
 extern bool fOfficialFairChain;
 extern bool fCustomChain;
 
