@@ -43,9 +43,9 @@ QString BitcoinUnits::name(int unit)
 {
     switch(unit)
     {
-    case BTC: return QString(fCustomChain ? strCustomCurrencySymbol.c_str() : "FAIR");
-    case mBTC: return QString("m").append(fCustomChain ? strCustomCurrencySymbol.c_str() : "FAIR");
-    case uBTC: return QString::fromUtf8("μ").append(fCustomChain ? strCustomCurrencySymbol.c_str() : "FAIR");
+    case BTC: return QString(strCurrencySymbol.c_str());
+    case mBTC: return QString("m").append(strCurrencySymbol.c_str());
+    case uBTC: return QString::fromUtf8("μ").append(strCurrencySymbol.c_str());
     default: return QString("???");
     }
 
@@ -58,9 +58,9 @@ QString BitcoinUnits::description(int unit)
 {
     switch(unit)
     {
-    case BTC: return QString(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin").append("s");
-    case mBTC: return QString("Milli-").append(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin").append("s (1 / 1" THIN_SP_UTF8 "000)");
-    case uBTC: return QString("Micro-").append(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin").append("s (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case BTC: return QString(strCurrencyName.c_str()).append("s");
+    case mBTC: return QString("Milli-").append(strCurrencyName.c_str()).append("s (1 / 1" THIN_SP_UTF8 "000)");
+    case uBTC: return QString("Micro-").append(strCurrencyName.c_str()).append("s (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     default: return QString("???");
     }
 }

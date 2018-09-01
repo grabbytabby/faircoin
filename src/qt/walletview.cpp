@@ -74,7 +74,7 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, cons
     if (!fHideFairChains) {
         txTabHolder->addTab(mpTXTab,tr("FairChains"));
     }
-    txTabHolder->addTab(bitcoinTXTab,tr(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"));
+    txTabHolder->addTab(bitcoinTXTab,tr(strCurrencyName.c_str()));
     txvbox->addWidget(txTabHolder);
     transactionsPage->setLayout(txvbox);
 
@@ -93,7 +93,7 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, cons
     if (!fHideFairChains) {
         sendTabHolder->addTab(sendMPTab,tr("FairChains"));
     }
-    sendTabHolder->addTab(sendCoinsTab,tr(fCustomChain ? strCustomCurrencyName.c_str() : "FairCoin"));
+    sendTabHolder->addTab(sendCoinsTab,tr(strCurrencyName.c_str()));
     svbox->addWidget(sendTabHolder);
     sendCoinsPage->setLayout(svbox);
 

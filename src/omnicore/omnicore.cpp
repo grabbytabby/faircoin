@@ -159,7 +159,7 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
     } else {
         switch (propertyId) {
             case OMNI_PROPERTY_BTC:
-                str = fCustomChain ? strCustomCurrencySymbol : "FAIR";
+                str = strCurrencySymbol;
                 break;
 //            case OMNI_PROPERTY_MSC: str = "OMNI";
 //                break;

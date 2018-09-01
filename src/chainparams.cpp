@@ -23,9 +23,9 @@
 #include <univalue.h>
 
 CDynamicChainParams dynParams;
-string strChainName;
-string strCustomCurrencyName = "FairCoin";
-string strCustomCurrencySymbol = "FAIR";
+string strChainName = "none";
+string strCurrencyName = "FairCoin";
+string strCurrencySymbol = "FAIR";
 
 static std::vector<CSchnorrPubKey> officialChainParamPubKeys = boost::assign::list_of
    (CSchnorrPubKeyDER("04a2bb310b665a2479666b0b4e591cce3ddede393a26954bf1b0ebd37a1b666cb2acb4396bcdeeec15d9aabaae3477122aa7a0286049e338ca5237f33b0f9ad31e"))
@@ -444,15 +444,16 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
     }
 
     CHECK_PARAM("currencyName", UniValue::VSTR, valNetDef);
-    strCustomCurrencyName = param.getValStr();
-    if (strCustomCurrencyName.empty() || strCustomCurrencyName.size() > 24) {
+    strCurrencyName = param.getValStr();
+    if (strCurrencyName.empty() || strCurrencyName.size() > 24) {
         fprintf(stderr, "currencyName is empty or too long\n");
         return false;
     }
 
+
     CHECK_PARAM("currencySymbol", UniValue::VSTR, valNetDef);
-    strCustomCurrencySymbol = param.getValStr();
-    if (strCustomCurrencySymbol.empty() || strCustomCurrencySymbol.size() > 8) {
+    strCurrencySymbol = param.getValStr();
+    if (strCurrencySymbol.empty() || strCurrencySymbol.size() > 8) {
         fprintf(stderr, "currencySymbol is empty or too long\n");
         return false;
     }

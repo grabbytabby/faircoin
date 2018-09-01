@@ -409,7 +409,7 @@ void OverviewPage::UpdatePropertyBalance(unsigned int propertyId, uint64_t avail
 
     if (propertyId == 0) { // override for bitcoin
         divisible = true;
-        tokenStr = " " + (fCustomChain ? strCustomCurrencySymbol : "FAIR");
+        tokenStr = " " + strCurrencySymbol;
     } else {
         divisible = isPropertyDivisible(propertyId);
         tokenStr = getTokenLabel(propertyId);
@@ -418,7 +418,7 @@ void OverviewPage::UpdatePropertyBalance(unsigned int propertyId, uint64_t avail
     // Left Panel
     QVBoxLayout *vlayoutleft = new QVBoxLayout();
     QLabel *balReservedLabel = new QLabel;
-    if(propertyId != 0) { balReservedLabel->setText("Reserved:"); } else { balReservedLabel->setText("Pending:"); propLabel->setText((fCustomChain ? strCustomCurrencyName : "FairCoin").c_str()); } // override for bitcoin
+    if(propertyId != 0) { balReservedLabel->setText("Reserved:"); } else { balReservedLabel->setText("Pending:"); propLabel->setText(strCurrencyName.c_str()); } // override for FairCoin
     QLabel *balAvailableLabel = new QLabel("Available:");
     QLabel *balTotalLabel = new QLabel("Total:");
     vlayoutleft->addWidget(balReservedLabel);
