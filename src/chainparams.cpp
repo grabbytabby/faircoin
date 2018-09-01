@@ -486,7 +486,7 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
 
     CHECK_PARAM("defaultPort", UniValue::VNUM, valNetDef);
     int nPort = param.get_int();
-    if (nPort < 1 || nPort > 0xffff /* || nPort == mainParams.GetDefaultPort()*/ || nPort == testNetParams.GetDefaultPort()) {
+    if (nPort < 1 || nPort > 0xffff || nPort == mainParams.GetDefaultPort() || nPort == testNetParams.GetDefaultPort()) {
         fprintf(stderr, "invalid default port: %d\n", nPort);
         return false;
     }
