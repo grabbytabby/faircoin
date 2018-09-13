@@ -510,10 +510,10 @@ static bool CreateGenesisBlock(CCustomParams& p, const UniValue& valNetDef)
     p.SetDNSSeeds(vSeeds);
 
     CHECK_PARAM("fixedSeeds", UniValue::VARR, valNetDef);
-    const UniValue& fixedSeeds = param.get_array();
+    const UniValue fixedSeeds = param.get_array();
     std::vector<SeedSpec6> vFixedSeeds;
     for (unsigned int idx = 0; idx < fixedSeeds.size(); idx++) {
-        const UniValue& node = nodes[idx];
+        const UniValue& node = fixedSeeds[idx];
         if (node.isNull() || node.getType() != UniValue::VOBJ) {
             fprintf(stderr, "invalid entry in \"fixedSeeds\"\n");
             return false;
