@@ -233,7 +233,7 @@ int main(int argc, char* argv[])
     prompt4Hex(data, "networkMagic", "Network magic bytes", "0xfabfb5fa");
 
     CKey keyAlert;
-    if (!createKeyFile("alert-" + strChainName + ".pem", "FairChains network", "Alert signer", "alert", strPassword, keyAlert)) {
+    if (!createKeyFile(strChainName + "-alert.pem", "FairChains network", "Alert signer", "alert", strPassword, keyAlert)) {
         fprintf(stderr, "ERROR: could not create CVN certificate\n");
         exit(0);
     }
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
     ss << hex << strId;
     ss >> nCnvId;
     CKey keyCVN;
-    if (!createKeyFile(strId + ".pem", "CVN node operator", "Block creator", strId, strPassword, keyCVN)) {
+    if (!createKeyFile(strChainName + "-" + strId + ".pem", "CVN node operator for " + strChainName, "Block creator", strId, strPassword, keyCVN)) {
         fprintf(stderr, "ERROR: could not create CVN certificate\n");
         exit(0);
     }
@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
     ss << hex << strId;
     ss >> nAdminId;
     CKey keyADMIN;
-    if (!createKeyFile(strId + ".pem", "CVN chain admin", "Chain data signer", strId, strPassword, keyADMIN)) {
+    if (!createKeyFile(strChainName + "-" + strId + ".pem", "CVN chain admin " + strChainName, "Chain data signer", strId, strPassword, keyADMIN)) {
         fprintf(stderr, "ERROR: could not create ADMIN certificate\n");
         exit(0);
     }
