@@ -228,9 +228,9 @@ public:
         return block;
     }
 
-    CSignedBlockHeader GetExtendedBlockHeader() const
+    CExtendedBlockHeader GetExtendedBlockHeader() const
     {
-        CSignedBlockHeader block;
+        CExtendedBlockHeader block;
         block.nVersion           = nVersion;
         if (pprev)
             block.hashPrevBlock  = pprev->GetBlockHash();
