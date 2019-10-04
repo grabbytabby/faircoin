@@ -160,17 +160,13 @@ public:
 class CExtendedMerkleBlock : public CMerkleBlock
 {
 public:
+    // Same fields as CMerkleBlock, but other serialization + creatorSignature field
     CSchnorrSig creatorSignature;
-    /**
-     * Create from a CBlock, filtering transactions according to filter
-     * Note that this will call IsRelevantAndUpdate on the filter for each transaction,
-     * thus the filter will likely be modified.
-     */
+
     CExtendedMerkleBlock(const CBlock& block, CBloomFilter& filter) : CMerkleBlock(block, filter) {
         creatorSignature = block.creatorSignature;
     };
 
-    // Create from a CBlock, matching the txids in the set
     CExtendedMerkleBlock(const CBlock& block, const std::set<uint256>& txids): CMerkleBlock(block, txids) {
         creatorSignature = block.creatorSignature;
     };
