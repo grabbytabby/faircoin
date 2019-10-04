@@ -4405,7 +4405,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
             boost::this_thread::interruption_point();
             it++;
 
-            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK || inv.type == MSG_FILTERED_EXTENDED_BLOCK)
             {
                 bool send = false;
                 BlockMap::iterator mi = mapBlockIndex.find(inv.hash);
@@ -4455,6 +4455,22 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                     if (inv.type == MSG_BLOCK) {
                         pfrom->PushMessage(NetMsgType::BLOCK, block);
                         pfrom->nTimeSinceLastBlockSent = GetTime();
+                    }
+                    else if(inv.type == MSG_FILTERED_EXTENDED_BLOCK) {
+                        // Output filtered extended blocks, that is, merkleblocks as usual
+                        // but with an additional creatorSignature field (also with appended
+                        // transactions)
+                        nPreviousTimeSinceLastBlockSent = 0;
+                        LOCK(pfrom->cs_filter);
+                        if (pfrom->pfilter)
+                        {
+                            CExtendedMerkleBlock merkleBlock(block, *pfrom->pfilter);
+                            pfrom->PushMessage(NetMsgType::MERKLEBLOCK_SIGNED, merkleBlock);
+
+                            typedef std::pair<unsigned int, uint256> PairType;
+                            BOOST_FOREACH(PairType& pair, merkleBlock.vMatchedTxn)
+                                pfrom->PushMessage(NetMsgType::TX, block.vtx[pair.first]);
+                        }
                     }
                     else // MSG_FILTERED_BLOCK)
                     {
@@ -4594,7 +4610,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
             // Track requests for our stuff.
             GetMainSignals().Inventory(inv.hash);
 
-            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK || inv.type == MSG_FILTERED_EXTENDED_BLOCK)
                 break;
         }
     }
