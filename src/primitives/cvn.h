@@ -32,6 +32,11 @@ public:
         memcpy(data, pch, WIDTH);
     }
 
+    poc_storage(const poc_storage& other)
+    {
+        memcpy(data, other.data, WIDTH);
+    }
+
     bool IsNull() const
     {
         for (int i = 0; i < WIDTH; i++)
@@ -110,6 +115,12 @@ public:
     CSchnorrSig() {}
     CSchnorrSig(const poc_storage<64>& b) : poc_storage<64>(b) {}
     explicit CSchnorrSig(const std::vector<unsigned char>& vch) : poc_storage<64>(vch) {}
+    
+    CSchnorrSig(const CSchnorrSig& sig)
+    {
+        memcpy(data, sig.data, 64);
+    }
+
     const CSchnorrRx GetRx() const
     {
         return CSchnorrRx(data);

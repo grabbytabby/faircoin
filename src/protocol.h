@@ -121,6 +121,14 @@ extern const char *GETBLOCKS;
  */
 extern const char *GETHEADERS;
 /**
+ * The getheaders_signed message requests a headers message that provides extended
+ * block headers starting from a particular point in the block chain including an
+ * additional field creatorSignature, which is a SchnorrSignature of the creator.
+ * @since protocol version 92001.
+ * @see https://bitcoin.org/en/developer-reference#getheaders
+ */
+extern const char *GETHEADERS_SIGNED;
+/**
  * The tx message transmits a single transaction.
  * @see https://bitcoin.org/en/developer-reference#tx
  */
@@ -132,6 +140,13 @@ extern const char *TX;
  * @see https://bitcoin.org/en/developer-reference#headers
  */
 extern const char *HEADERS;
+/**
+ * The headers_signed message sends one or more extended block headers to a node which
+ * previously requested certain headers with a getheaders_signed message.
+ * @since protocol version 92001.
+ * @see https://bitcoin.org/en/developer-reference#headers
+ */
+extern const char *HEADERS_SIGNED;
 /**
  * The block message transmits a single serialized block.
  * @see https://bitcoin.org/en/developer-reference#block

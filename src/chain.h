@@ -144,6 +144,7 @@ public:
     uint256 hashPayload;
     unsigned int nTime;
     unsigned int nCreatorId;
+    CSchnorrSig creatorSig;
 
     vector<uint32_t> vMissingSignerIds;
 
@@ -170,6 +171,8 @@ public:
         hashPayload    = uint256();
         nTime          = 0;
         nCreatorId     = 0;
+
+        creatorSig = CSchnorrSig();
     }
 
     CBlockIndex()
@@ -177,7 +180,7 @@ public:
         SetNull();
     }
 
-    CBlockIndex(const CBlockHeader& block, const vector<uint32_t>* vMissingSignerIdsIn)
+    CBlockIndex(const CBlockHeader& block, const vector<uint32_t>* vMissingSignerIdsIn, const CSchnorrSig& creatorSigIn)
     {
         SetNull();
 
@@ -186,6 +189,8 @@ public:
         hashPayload        = block.hashPayload;
         nTime              = block.nTime;
         nCreatorId         = block.nCreatorId;
+        creatorSig         = creatorSigIn;
+
         if (vMissingSignerIdsIn)
             vMissingSignerIds = *vMissingSignerIdsIn;
         else
@@ -220,6 +225,20 @@ public:
         block.hashPayload        = hashPayload;
         block.nTime              = nTime;
         block.nCreatorId         = nCreatorId;
+        return block;
+    }
+
+    CSignedBlockHeader GetExtendedBlockHeader() const
+    {
+        CSignedBlockHeader block;
+        block.nVersion           = nVersion;
+        if (pprev)
+            block.hashPrevBlock  = pprev->GetBlockHash();
+        block.hashMerkleRoot     = hashMerkleRoot;
+        block.hashPayload        = hashPayload;
+        block.nTime              = nTime;
+        block.nCreatorId         = nCreatorId;
+        block.creatorSig         = creatorSig;
         return block;
     }
 
@@ -339,6 +358,7 @@ public:
         READWRITE(nTime);
         READWRITE(nCreatorId);
         READWRITE(vMissingSignerIds);
+        READWRITE(creatorSig);
     }
 
     uint256 GetBlockHash() const
