@@ -3193,6 +3193,10 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             if (vMissingSignerIds && !vMissingSignerIds->empty())
                 pindex->vMissingSignerIds = *vMissingSignerIds;
 
+            // same goes for creatorSig (which is not set initially when receiving block header)
+            if (!creatorSig.IsNull())
+                pindex->creatorSig = creatorSig;
+
             return true;
         }
 
