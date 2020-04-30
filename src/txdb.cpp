@@ -202,6 +202,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->vMissingSignerIds  = diskindex.vMissingSignerIds;
                 pindexNew->nStatus            = diskindex.nStatus;
                 pindexNew->nTx                = diskindex.nTx;
+                pindexNew->creatorSig         = diskindex.creatorSig;
 
                 pcursor->Next();
             } else {

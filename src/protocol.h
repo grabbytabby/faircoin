@@ -108,6 +108,13 @@ extern const char *GETDATA;
  */
 extern const char *MERKLEBLOCK;
 /**
+ * The merkleblock message is a reply to a getdata message which requested a
+ * block using the inventory type MSG_MERKLEBLOCK.
+ * @since protocol version 70001 as described by BIP37.
+ * @see https://bitcoin.org/en/developer-reference#merkleblock
+ */
+extern const char *MERKLEBLOCK_SIGNED;
+/**
  * The getblocks message requests an inv message that provides block header
  * hashes starting from a particular point in the block chain.
  * @see https://bitcoin.org/en/developer-reference#getblocks
@@ -121,6 +128,14 @@ extern const char *GETBLOCKS;
  */
 extern const char *GETHEADERS;
 /**
+ * The getheaders_signed message requests a headers message that provides extended
+ * block headers starting from a particular point in the block chain including an
+ * additional field creatorSignature, which is a SchnorrSignature of the creator.
+ * @since protocol version 92001.
+ * @see https://bitcoin.org/en/developer-reference#getheaders
+ */
+extern const char *GETHEADERS_SIGNED;
+/**
  * The tx message transmits a single transaction.
  * @see https://bitcoin.org/en/developer-reference#tx
  */
@@ -132,6 +147,13 @@ extern const char *TX;
  * @see https://bitcoin.org/en/developer-reference#headers
  */
 extern const char *HEADERS;
+/**
+ * The headers_signed message sends one or more extended block headers to a node which
+ * previously requested certain headers with a getheaders_signed message.
+ * @since protocol version 92001.
+ * @see https://bitcoin.org/en/developer-reference#headers
+ */
+extern const char *HEADERS_SIGNED;
 /**
  * The block message transmits a single serialized block.
  * @see https://bitcoin.org/en/developer-reference#block
@@ -344,6 +366,7 @@ enum {
     MSG_POC_CHAIN_DATA,
     MSG_CHAIN_ADMIN_NONCE,
     MSG_CHAIN_ADMIN_SIGNATURE,
+    MSG_FILTERED_EXTENDED_BLOCK,
 };
 
 #endif // BITCOIN_PROTOCOL_H

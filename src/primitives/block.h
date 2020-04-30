@@ -108,6 +108,28 @@ public:
     uint256 GetHash() const;
 };
 
+// This class is the same as the regular blockheader,
+// but it appends the field creatorSig to the end
+class CExtendedBlockHeader : public CBlockHeader
+{
+public:
+    CSchnorrSig creatorSig;
+
+    void SetNull()
+    {
+        CBlockHeader::SetNull();
+        creatorSig = CSchnorrSig();
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(*(CBlockHeader*) this);
+        READWRITE(creatorSig);
+    }
+};
+
 class CBlock : public CBlockHeader
 {
 public:

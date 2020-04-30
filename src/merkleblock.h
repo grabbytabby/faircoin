@@ -153,4 +153,34 @@ public:
     }
 };
 
+/**
+ * Used to relay blocks as header + creator signature + vector<merkle branch>
+ * to filtered nodes.
+ */
+class CExtendedMerkleBlock : public CMerkleBlock
+{
+public:
+    // Same fields as CMerkleBlock, but other serialization + creatorSignature field
+    CSchnorrSig creatorSignature;
+
+    CExtendedMerkleBlock(const CBlock& block, CBloomFilter& filter) : CMerkleBlock(block, filter) {
+        creatorSignature = block.creatorSignature;
+    };
+
+    CExtendedMerkleBlock(const CBlock& block, const std::set<uint256>& txids): CMerkleBlock(block, txids) {
+        creatorSignature = block.creatorSignature;
+    };
+
+    CExtendedMerkleBlock() {}
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(header);
+        READWRITE(creatorSignature);
+        READWRITE(txn);
+    }
+};
+
 #endif // BITCOIN_MERKLEBLOCK_H

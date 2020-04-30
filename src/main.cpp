@@ -2792,7 +2792,7 @@ bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex) {
     return true;
 }
 
-CBlockIndex* AddToBlockIndex(const CBlockHeader& block, const vector<uint32_t>* vMissingSignerIds)
+CBlockIndex* AddToBlockIndex(const CBlockHeader& block, const vector<uint32_t>* vMissingSignerIds, const CSchnorrSig& creatorSigIn)
 {
     // Check for duplicate
     uint256 hash = block.GetHash();
@@ -2801,7 +2801,7 @@ CBlockIndex* AddToBlockIndex(const CBlockHeader& block, const vector<uint32_t>* 
         return it->second;
 
     // Construct new block index object
-    CBlockIndex* pindexNew = new CBlockIndex(block, vMissingSignerIds);
+    CBlockIndex* pindexNew = new CBlockIndex(block, vMissingSignerIds, creatorSigIn);
     assert(pindexNew);
     // We assign the sequence id to blocks only when the full data is available,
     // to avoid miners withholding blocks but broadcasting headers, to get a
@@ -3172,7 +3172,7 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
     return true;
 }
 
-static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, const vector<uint32_t>* vMissingSignerIds=NULL)
+static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, const vector<uint32_t>* vMissingSignerIds = NULL, const CSchnorrSig& creatorSig = CSchnorrSig())
 {
     AssertLockHeld(cs_main);
     // Check for duplicate
@@ -3192,6 +3192,10 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             // if we have received the header first vMissingSignerIds was not set
             if (vMissingSignerIds && !vMissingSignerIds->empty())
                 pindex->vMissingSignerIds = *vMissingSignerIds;
+
+            // same goes for creatorSig (which is not set initially when receiving block header)
+            if (!creatorSig.IsNull())
+                pindex->creatorSig = creatorSig;
 
             return true;
         }
@@ -3219,7 +3223,7 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             return false;
     }
     if (pindex == NULL)
-        pindex = AddToBlockIndex(block, vMissingSignerIds);
+        pindex = AddToBlockIndex(block, vMissingSignerIds, creatorSig);
 
     if (ppindex)
         *ppindex = pindex;
@@ -3234,7 +3238,7 @@ static bool AcceptBlock(const CBlock& block, CValidationState& state, const CCha
 
     CBlockIndex *&pindex = *ppindex;
 
-    if (!AcceptBlockHeader(block, state, chainparams, &pindex, &block.vMissingSignerIds))
+    if (!AcceptBlockHeader(block, state, chainparams, &pindex, &block.vMissingSignerIds, block.creatorSignature))
         return false;
 
     // Try to process all requested blocks that we don't have, but only
@@ -3377,7 +3381,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
         return error("%s: CheckIndexAgainstCheckpoint(): %s", __func__, state.GetRejectReason().c_str());
 
     CCoinsViewCache viewNew(pcoinsTip);
-    CBlockIndex indexDummy(block, &block.vMissingSignerIds);
+    CBlockIndex indexDummy(block, &block.vMissingSignerIds, block.creatorSignature);
     indexDummy.pprev = pindexPrev;
     indexDummy.nHeight = pindexPrev->nHeight + 1;
 
@@ -3939,7 +3943,7 @@ bool InitBlockIndex(const CChainParams& chainparams)
                 return error("LoadBlockIndex(): FindBlockPos failed");
             if (!WriteBlockToDisk(block, blockPos, chainparams.MessageStart()))
                 return error("LoadBlockIndex(): writing genesis block to disk failed");
-            CBlockIndex *pindex = AddToBlockIndex(block, &block.vMissingSignerIds);
+            CBlockIndex *pindex = AddToBlockIndex(block, &block.vMissingSignerIds, block.creatorSignature);
             if (!ReceivedBlockTransactions(block, state, pindex, blockPos))
                 return error("LoadBlockIndex(): genesis block not accepted");
             if (!ActivateBestChain(state, chainparams, &block))
@@ -4405,7 +4409,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
             boost::this_thread::interruption_point();
             it++;
 
-            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK || inv.type == MSG_FILTERED_EXTENDED_BLOCK)
             {
                 bool send = false;
                 BlockMap::iterator mi = mapBlockIndex.find(inv.hash);
@@ -4455,6 +4459,22 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                     if (inv.type == MSG_BLOCK) {
                         pfrom->PushMessage(NetMsgType::BLOCK, block);
                         pfrom->nTimeSinceLastBlockSent = GetTime();
+                    }
+                    else if(inv.type == MSG_FILTERED_EXTENDED_BLOCK) {
+                        // Output filtered extended blocks, that is, merkleblocks as usual
+                        // but with an additional creatorSignature field (also with appended
+                        // transactions)
+                        nPreviousTimeSinceLastBlockSent = 0;
+                        LOCK(pfrom->cs_filter);
+                        if (pfrom->pfilter)
+                        {
+                            CExtendedMerkleBlock merkleBlock(block, *pfrom->pfilter);
+                            pfrom->PushMessage(NetMsgType::MERKLEBLOCK_SIGNED, merkleBlock);
+
+                            typedef std::pair<unsigned int, uint256> PairType;
+                            BOOST_FOREACH(PairType& pair, merkleBlock.vMatchedTxn)
+                                pfrom->PushMessage(NetMsgType::TX, block.vtx[pair.first]);
+                        }
                     }
                     else // MSG_FILTERED_BLOCK)
                     {
@@ -4594,7 +4614,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
             // Track requests for our stuff.
             GetMainSignals().Inventory(inv.hash);
 
-            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK || inv.type == MSG_FILTERED_EXTENDED_BLOCK)
                 break;
         }
     }
@@ -5049,6 +5069,58 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         // pindexBestHeaderSent to be our tip.
         nodestate->pindexBestHeaderSent = pindex ? pindex : chainActive.Tip();
         pfrom->PushMessage(NetMsgType::HEADERS, vHeaders);
+    }
+
+    // Get extended block headers (that is, regular block headers with an additional signature field).
+    // This is basically extending the GETHEADERS response with the creatorSig field,
+    // which we need in order to validate the block header response data using Schnorr signatures.
+    // Otherwise clients would have to request the full block in order to retrieve
+    // the 64 byte signature. This message type allows an easy validation of block headers.
+    else if (strCommand == NetMsgType::GETHEADERS_SIGNED)
+    {
+        CBlockLocator locator;
+        uint256 hashStop;
+        vRecv >> locator >> hashStop;
+
+        LOCK(cs_main);
+        if (IsInitialBlockDownload() && !pfrom->fWhitelisted) {
+            LogPrint("net", "Ignoring getheaders from peer=%d because node is in initial block download\n", pfrom->id);
+            return true;
+        }
+
+        CNodeState *nodestate = State(pfrom->GetId());
+        CBlockIndex* pindex = NULL;
+        if (locator.IsNull())
+        {
+            // If locator is null, return the hashStop block
+            BlockMap::iterator mi = mapBlockIndex.find(hashStop);
+            if (mi == mapBlockIndex.end())
+                return true;
+            pindex = (*mi).second;
+        }
+        else
+        {
+            // Find the last block the caller has in the main chain
+            pindex = FindForkInGlobalIndex(chainActive, locator);
+            if (pindex)
+                pindex = chainActive.Next(pindex);
+        }
+
+        vector<CExtendedBlockHeader> vHeaders;
+        int nLimit = MAX_SIGNED_HEADERS_RESULTS;
+        LogPrint("net", "getheaders_signed %d to %s from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString(), pfrom->id);
+        for (; pindex; pindex = chainActive.Next(pindex))
+        {
+            vHeaders.push_back(pindex->GetExtendedBlockHeader());
+            if (--nLimit <= 0 || pindex->GetBlockHash() == hashStop)
+                break;
+        }
+        // pindex can be NULL either if we sent chainActive.Tip() OR
+        // if our peer has chainActive.Tip() (and thus we are sending an empty
+        // headers message). In both cases it's safe to update
+        // pindexBestHeaderSent to be our tip.
+        nodestate->pindexBestHeaderSent = pindex ? pindex : chainActive.Tip();
+        pfrom->PushMessage(NetMsgType::HEADERS_SIGNED, vHeaders);
     }
 
 
