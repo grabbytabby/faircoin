@@ -206,6 +206,16 @@ int main(int argc, char* argv[])
 
     if (argc == 5 && !strcmp("-sign", argv[1]) && !strcmp("-key", argv[3])) {
         return SignJSONFile(string(argv[2]), string(argv[4]));
+    } else if (argc == 4 && !strcmp("-createcvnkey", argv[1]) ) { 
+        CKey keyCVN;
+        string strId = argv[2];
+        string strChainName = argv[3];
+        string strPassword = requestPassword();
+        if (!createKeyFile(strChainName + "-" + strId + ".pem", "CVN node operator for " + strChainName, "Block creator", strId, strPassword, keyCVN)) {
+            fprintf(stderr, "ERROR: could not create CVN certificate\n");
+            exit(0);
+        }
+       return 0;
     } else if (argc > 1) {
         fprintf(stderr, "ERROR: invalid arguments.\n");
         return -1;
