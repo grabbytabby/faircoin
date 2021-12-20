@@ -470,6 +470,8 @@ void BitcoinApplication::initializeResult(int retval)
 #endif
 
         clientModel = new ClientModel(optionsModel);
+        clientModel->fHideFairChains = GetBoolArg("-hidefairchains", false);
+
         window->setClientModel(clientModel);
 
 #ifdef ENABLE_WALLET

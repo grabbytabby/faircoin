@@ -56,7 +56,7 @@ public:
     long getMempoolSize() const;
     //! Return the dynamic memory usage of the mempool
     size_t getMempoolDynamicUsage() const;
-    
+
     quint64 getTotalBytesRecv() const;
     quint64 getTotalBytesSent() const;
 
@@ -78,6 +78,11 @@ public:
     QString formatClientStartupTime() const;
     QString dataDir() const;
 
+    // Try to avoid Omni queuing too many messages
+    bool tryLockOmniStateChanged();
+    bool tryLockOmniBalanceChanged();
+
+    bool fHideFairChains;
 private:
     OptionsModel *optionsModel;
     PeerTableModel *peerTableModel;
@@ -88,12 +93,22 @@ private:
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
 
+    // Locks for Omni state changes
+    bool lockedOmniStateChanged;
+    bool lockedOmniBalanceChanged;
+
 Q_SIGNALS:
     void numConnectionsChanged(int count);
     void numBlocksChanged(int count, const QDateTime& blockDate, double nVerificationProgress);
     void mempoolSizeChanged(long count, size_t mempoolSizeInBytes);
     void alertsChanged(const QString &warnings);
     void bytesChanged(quint64 totalBytesIn, quint64 totalBytesOut);
+
+    // Additional Omni signals
+    void reinitOmniState();
+    void refreshOmniState();
+    void refreshOmniBalance();
+    void refreshOmniPending(bool pending);
 
     //! Fired when a message should be reported to the user
     void message(const QString &title, const QString &message, unsigned int style);
@@ -106,6 +121,12 @@ public Q_SLOTS:
     void updateNumConnections(int numConnections);
     void updateAlert(const QString &hash, int status);
     void updateBanlist();
+
+    // Additional Omni slots
+    void invalidateOmniState();
+    void updateOmniState();
+    void updateOmniBalance();
+    void updateOmniPending(bool pending);
 };
 
 #endif // BITCOIN_QT_CLIENTMODEL_H

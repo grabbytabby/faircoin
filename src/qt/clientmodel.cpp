@@ -22,6 +22,8 @@
 #include <QDebug>
 #include <QTimer>
 
+#include <boost/bind.hpp>
+
 class CBlockIndex;
 
 static const int64_t nClientStartupTime = GetTime();
@@ -32,7 +34,9 @@ ClientModel::ClientModel(OptionsModel *optionsModel, QObject *parent) :
     optionsModel(optionsModel),
     peerTableModel(0),
     banTableModel(0),
-    pollTimer(0)
+    pollTimer(0),
+    lockedOmniStateChanged(false),
+    lockedOmniBalanceChanged(false)
 {
     peerTableModel = new PeerTableModel(this);
     banTableModel = new BanTableModel(this);
@@ -120,6 +124,50 @@ void ClientModel::updateTimer()
 void ClientModel::updateNumConnections(int numConnections)
 {
     Q_EMIT numConnectionsChanged(numConnections);
+}
+
+void ClientModel::invalidateOmniState()
+{
+    Q_EMIT reinitOmniState();
+}
+
+void ClientModel::updateOmniState()
+{
+    lockedOmniStateChanged = false;
+    Q_EMIT refreshOmniState();
+}
+
+bool ClientModel::tryLockOmniStateChanged()
+{
+    // Try to avoid Omni queuing too many messages for the UI
+    if (lockedOmniStateChanged) {
+        return false;
+    }
+
+    lockedOmniStateChanged = true;
+    return true;
+}
+
+void ClientModel::updateOmniBalance()
+{
+    lockedOmniBalanceChanged = false;
+    Q_EMIT refreshOmniBalance();
+}
+
+bool ClientModel::tryLockOmniBalanceChanged()
+{
+    // Try to avoid Omni queuing too many messages for the UI
+    if (lockedOmniBalanceChanged) {
+        return false;
+    }
+
+    lockedOmniBalanceChanged = true;
+    return true;
+}
+
+void ClientModel::updateOmniPending(bool pending)
+{
+    Q_EMIT refreshOmniPending(pending);
 }
 
 void ClientModel::updateAlert(const QString &hash, int status)
@@ -217,6 +265,34 @@ void ClientModel::updateBanlist()
 }
 
 // Handlers for core signals
+static void OmniStateInvalidated(ClientModel *clientmodel)
+{
+    // This will be triggered if a reorg invalidates the state
+    QMetaObject::invokeMethod(clientmodel, "invalidateOmniState", Qt::QueuedConnection);
+}
+
+static void OmniStateChanged(ClientModel *clientmodel)
+{
+    // This will be triggered for each block that contains Omni layer transactions
+    if (clientmodel->tryLockOmniStateChanged()) {
+        QMetaObject::invokeMethod(clientmodel, "updateOmniState", Qt::QueuedConnection);
+    }
+}
+
+static void OmniBalanceChanged(ClientModel *clientmodel)
+{
+    // Triggered when a balance for a wallet address changes
+    if (clientmodel->tryLockOmniBalanceChanged()) {
+        QMetaObject::invokeMethod(clientmodel, "updateOmniBalance", Qt::QueuedConnection);
+    }
+}
+
+static void OmniPendingChanged(ClientModel *clientmodel, bool pending)
+{
+    // Triggered when Omni pending map adds/removes transactions
+    QMetaObject::invokeMethod(clientmodel, "updateOmniPending", Qt::QueuedConnection, Q_ARG(bool, pending));
+}
+
 static void ShowProgress(ClientModel *clientmodel, const std::string &title, int nProgress)
 {
     // emits signal "showProgress"
@@ -274,6 +350,12 @@ void ClientModel::subscribeToCoreSignals()
     uiInterface.NotifyAlertChanged.connect(boost::bind(NotifyAlertChanged, this, _1, _2));
     uiInterface.BannedListChanged.connect(boost::bind(BannedListChanged, this));
     uiInterface.NotifyBlockTip.connect(boost::bind(BlockTipChanged, this, _1, _2));
+
+    // Connect Omni signals
+    uiInterface.OmniStateChanged.connect(boost::bind(OmniStateChanged, this));
+    uiInterface.OmniPendingChanged.connect(boost::bind(OmniPendingChanged, this, _1));
+    uiInterface.OmniBalanceChanged.connect(boost::bind(OmniBalanceChanged, this));
+    uiInterface.OmniStateInvalidated.connect(boost::bind(OmniStateInvalidated, this));
 }
 
 void ClientModel::unsubscribeFromCoreSignals()
@@ -284,4 +366,10 @@ void ClientModel::unsubscribeFromCoreSignals()
     uiInterface.NotifyAlertChanged.disconnect(boost::bind(NotifyAlertChanged, this, _1, _2));
     uiInterface.BannedListChanged.disconnect(boost::bind(BannedListChanged, this));
     uiInterface.NotifyBlockTip.disconnect(boost::bind(BlockTipChanged, this, _1, _2));
+
+    // Disconnect Omni signals
+    uiInterface.OmniStateChanged.disconnect(boost::bind(OmniStateChanged, this));
+    uiInterface.OmniPendingChanged.disconnect(boost::bind(OmniPendingChanged, this, _1));
+    uiInterface.OmniBalanceChanged.disconnect(boost::bind(OmniBalanceChanged, this));
+    uiInterface.OmniStateInvalidated.disconnect(boost::bind(OmniStateInvalidated, this));
 }

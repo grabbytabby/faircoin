@@ -17,6 +17,7 @@ static const CAmount COIN = 100000000;
 static const CAmount CENT = 1000000;
 
 extern const std::string CURRENCY_UNIT;
+extern CAmount GetMaxMoney();
 
 /** No amount larger than this is valid.
  *
@@ -30,7 +31,7 @@ extern const std::string CURRENCY_UNIT;
  * In FairCoin2 this is the exact amount of balances from the FairCoin1 block chain
  * */
 static const CAmount MAX_MONEY = 53193831.467966 * COIN; // Maximum number of coins from the FairCoin1 blockchain
-inline bool MoneyRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
+inline bool MoneyRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= GetMaxMoney()); }
 
 /** Type-safe wrapper class for fee rates
  * (how much to pay based on transaction size)
