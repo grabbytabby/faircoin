@@ -49,12 +49,16 @@
 #ifndef WIN32
 #include <signal.h>
 #endif
-
+#define BOOST_BIND_NO_PLACEHOLDERS
+#ifndef BOOST_BIND_HPP_INCLUDED
+#define BOOST_BIND_HPP_INCLUDED
+#endif
+#include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/bind.hpp>
+//#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/function.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
