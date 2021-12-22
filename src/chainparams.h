@@ -11,22 +11,10 @@
 #include "primitives/block.h"
 #include "protocol.h"
 
-class UniValue;
-
 #include <vector>
 
 extern CDynamicChainParams dynParams;
 extern bool CheckDynamicChainParameters(const CDynamicChainParams& params);
-
-extern CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nCreatorId, const CDynamicChainParams& dynamicChainParams);
-extern bool InitialiseCustomParams(const UniValue &valNetDef, const char *pFileName, const bool fUnsignedPenalty = true);
-
-extern string strChainName;
-extern string strCurrencyName;
-extern string strCurrencySymbol;
-extern string strURIscheme;
-extern bool fOfficialFairChain;
-extern bool fCustomChain;
 
 struct CDNSSeedData {
     std::string name, host;
@@ -88,22 +76,6 @@ public:
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
     const CCheckpointData& Checkpoints() const { return checkpointData; }
-    void SetMessageStart(const uint32_t messageStart) {
-        pchMessageStart[0] = (messageStart >> 24) & 0xff;
-        pchMessageStart[1] = (messageStart >> 16) & 0xff;
-        pchMessageStart[2] = (messageStart >>  8) & 0xff;
-        pchMessageStart[3] = (messageStart >>  0) & 0xff;
-    }
-    void SetAlertKey(std::vector<unsigned char>& key) { vAlertPubKey = key; }
-    void SetDefaultPort(const int port) { nDefaultPort = port; }
-    void SetGenesisBlock(CBlock& block) { genesis = block; }
-    void SetRequireStandard(const bool requireStandard) { fRequireStandard = requireStandard ; }
-    void SetNetworkIDString(std::string strNetwork) { strNetworkID = strNetwork; }
-    void SetDNSSeeds(std::vector<CDNSSeedData>& seeds) { vSeeds = seeds; }
-    void SetBase58Prefix(std::vector<unsigned char>& prefix, const Base58Type type) { base58Prefixes[type] = prefix; }
-    void SetFixedSeeds(std::vector<SeedSpec6>& seeds) { vFixedSeeds = seeds; }
-    void SetCheckpoints(CCheckpointData& checkpoints) { checkpointData = checkpoints; }
-    void SetConsensusGenesisHash(const uint256& genesisHash) { consensus.hashGenesisBlock = genesisHash; }
 protected:
     CChainParams() {}
 
@@ -141,6 +113,5 @@ CChainParams& Params(const std::string& chain);
  * @throws std::runtime_error when the chain is not supported.
  */
 void SelectParams(const std::string& chain);
-CAmount GetMaxMoney();
 
 #endif // BITCOIN_CHAINPARAMS_H

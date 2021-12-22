@@ -47,7 +47,7 @@
 #endif
 
 const int BITCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
-//const QString BITCOIN_IPC_PREFIX("faircoin:");
+const QString BITCOIN_IPC_PREFIX("faircoin:");
 // BIP70 payment protocol messages
 const char* BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char* BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
@@ -213,7 +213,7 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
         // network as that would require fetching and parsing the payment request.
         // That means clicking such an URI which contains a testnet payment request
         // will start a mainnet instance and throw a "wrong network" error.
-        if (arg.startsWith(QString((strURIscheme + ":").c_str()), Qt::CaseInsensitive)) // FairCoin: URI
+        if (arg.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // bitcoin: URI
         {
             savedPaymentRequests.append(arg);
 
@@ -229,10 +229,6 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
                 else if (address.IsValid(Params(CBaseChainParams::TESTNET)))
                 {
                     SelectParams(CBaseChainParams::TESTNET);
-                }
-                else if (address.IsValid(Params(CBaseChainParams::CUSTOM)))
-                {
-                    SelectParams(CBaseChainParams::CUSTOM);
                 }
             }
         }
@@ -250,10 +246,6 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
                 else if (request.getDetails().network() == "test")
                 {
                     SelectParams(CBaseChainParams::TESTNET);
-                }
-                else if (request.getDetails().network() == "custom")
-                {
-                    SelectParams(CBaseChainParams::CUSTOM);
                 }
             }
         }
@@ -415,7 +407,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
         return;
     }
 
-    if (s.startsWith(QString((strURIscheme + ":").c_str()), Qt::CaseInsensitive)) // FairCoin: URI
+    if (s.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // bitcoin: URI
     {
 #if QT_VERSION < 0x050000
         QUrl uri(s);
@@ -811,7 +803,7 @@ bool PaymentServer::verifyAmount(const CAmount& requestAmount)
         qWarning() << QString("PaymentServer::%1: Payment request amount out of allowed range (%2, allowed 0 - %3).")
             .arg(__func__)
             .arg(requestAmount)
-            .arg(GetMaxMoney());
+            .arg(MAX_MONEY);
     }
     return fVerified;
 }

@@ -5,8 +5,6 @@
 
 #include "validationinterface.h"
 
-#include <boost/bind.hpp>
-
 static CMainSignals g_signals;
 
 CMainSignals& GetMainSignals()

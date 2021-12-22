@@ -17,7 +17,9 @@
 #include "utiltime.h"
 
 #include <stdarg.h>
+#ifdef USE_CVN
 #include <termios.h>
+#endif // USE_CVN
 
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
 #include <pthread.h>
@@ -100,8 +102,8 @@ namespace boost {
 
 using namespace std;
 
-const char * const BITCOIN_CONF_FILENAME = "fairchains.conf";
-const char * const BITCOIN_PID_FILENAME = "fairchainsd.pid";
+const char * const BITCOIN_CONF_FILENAME = "faircoin.conf";
+const char * const BITCOIN_PID_FILENAME = "faircoind.pid";
 
 map<string, string> mapArgs;
 map<string, vector<string> > mapMultiArgs;
@@ -116,9 +118,6 @@ bool fLogTimeMicros = DEFAULT_LOGTIMEMICROS;
 bool fLogIPs = DEFAULT_LOGIPS;
 std::atomic<bool> fReopenDebugLog(false);
 CTranslationInterface translationInterface;
-
-/** Flag to indicate, whether the Omni Core log file should be reopened. */
-std::atomic<bool> fReopenOmniCoreLog(false);
 
 /** Init OpenSSL library multithreading support */
 static CCriticalSection** ppmutexOpenSSL;
@@ -465,7 +464,7 @@ boost::filesystem::path GetDefaultDataDir()
     // Unix: ~/.bitcoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "fairchains";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "faircoin2";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -475,10 +474,10 @@ boost::filesystem::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/fairchains";
+    return pathRet / "Library/Application Support/faircoin2";
 #else
     // Unix
-    return pathRet / ".fairchains";
+    return pathRet / ".faircoin2";
 #endif
 #endif
 }
@@ -861,6 +860,7 @@ int GetNumCores()
 #endif
 }
 
+#ifdef USE_CVN
 void promptForPassword(const std::string &strPrompt, std::string &strPassword)
 {
     cout << strPrompt;
@@ -876,3 +876,4 @@ void promptForPassword(const std::string &strPrompt, std::string &strPassword)
     tcsetattr(STDIN_FILENO, TCSANOW, &t);
     cout << "\n";
 }
+#endif // USE_CVN
