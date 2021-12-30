@@ -39,6 +39,7 @@ public:
     }
 };
 
+#ifdef USE_FASITO
 string requestPassword()
 {
     string strPassword;
@@ -66,6 +67,7 @@ string requestPassword()
 
     return strPassword;
 }
+#endif
 
 int SignJSONFile(const string &strFileName, const string &strKeyFile)
 {
@@ -106,7 +108,11 @@ int SignJSONFile(const string &strFileName, const string &strKeyFile)
     time_t now = time(0);
     tm *gmtm = gmtime(&now);
     char cTime[32];
-    asctime_r(gmtm, cTime);
+    //asctime_r(gmtm, cTime); //This function is not available for Windows
+    errno_t errNum = asctime_s(cTime, 32, gmtm);
+    if (errNum) {
+        //FixMe: Do something with the error.
+    }
     cTime[strlen(cTime) - 1] = 0; // strip the "\n"
 
     const string strComment("signed by " + strFullName + " on " + string(cTime) + " UTC");
@@ -192,7 +198,8 @@ static const string strInstructions =
 
 int main(int argc, char* argv[])
 {
-    OpenSSL_add_all_algorithms();
+#ifdef USE_FASITO
+   OpenSSL_add_all_algorithms();
 
     ERR_load_BIO_strings();
     ERR_load_crypto_strings();
@@ -206,7 +213,7 @@ int main(int argc, char* argv[])
 
     if (argc == 5 && !strcmp("-sign", argv[1]) && !strcmp("-key", argv[3])) {
         return SignJSONFile(string(argv[2]), string(argv[4]));
-    } else if (argc == 4 && !strcmp("-createcvnkey", argv[1]) ) { 
+    } else if (argc == 4 && !strcmp("-createcvnkey", argv[1]) ) {
         CKey keyCVN;
         string strId = argv[2];
         string strChainName = argv[3];
@@ -215,7 +222,7 @@ int main(int argc, char* argv[])
             fprintf(stderr, "ERROR: could not create CVN certificate\n");
             exit(0);
         }
-       return 0;
+        return 0;
     } else if (argc > 1) {
         fprintf(stderr, "ERROR: invalid arguments.\n");
         return -1;
@@ -400,6 +407,10 @@ int main(int argc, char* argv[])
     memset((void *)&keyADMIN.begin()[0], 0, 32);
 
     return 0;
+#else
+    fprintf(stderr, "ERROR: Unusable. This wallet version was not compiled with fasito support\n");
+    return -1;
+#endif
 }
 
 // dummy
