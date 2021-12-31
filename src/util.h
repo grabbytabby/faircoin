@@ -218,7 +218,9 @@ std::string HelpMessageOpt(const std::string& option, const std::string& message
  */
 int GetNumCores();
 
+#ifdef USE_FASITO
 void promptForPassword(const std::string &strPrompt, std::string &strPassword);
+#endif
 
 void SetThreadPriority(int nPriority);
 void RenameThread(const char* name);

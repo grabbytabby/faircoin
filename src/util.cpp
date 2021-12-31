@@ -17,9 +17,10 @@
 #include "utiltime.h"
 
 #include <stdarg.h>
-#ifdef USE_CVN
+
+#if !defined(WIN32) || defined(USE_FASITO) //termios is unavailable on Windows
 #include <termios.h>
-#endif // USE_CVN
+#endif
 
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
 #include <pthread.h>
@@ -860,7 +861,7 @@ int GetNumCores()
 #endif
 }
 
-#ifdef USE_CVN
+#ifdef USE_FASITO
 void promptForPassword(const std::string &strPrompt, std::string &strPassword)
 {
     cout << strPrompt;
@@ -876,4 +877,4 @@ void promptForPassword(const std::string &strPrompt, std::string &strPassword)
     tcsetattr(STDIN_FILENO, TCSANOW, &t);
     cout << "\n";
 }
-#endif // USE_CVN
+#endif
