@@ -70,11 +70,11 @@ TESTS =
 BENCHMARKS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += fairchainsd
+  bin_PROGRAMS += faircoind
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += fairchains-cli fairchains-tx fairchains-tool
+  bin_PROGRAMS += faircoin-cli faircoin-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
@@ -380,16 +380,16 @@ nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # bitcoind binary #
-fairchainsd_SOURCES = bitcoind.cpp
-fairchainsd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-fairchainsd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-fairchainsd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+faircoind_SOURCES = bitcoind.cpp
+faircoind_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+faircoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+faircoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-fairchainsd_SOURCES += bitcoind-res.rc
+faircoind_SOURCES += bitcoind-res.rc
 endif
 
-fairchainsd_LDADD = \
+faircoind_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_COMMON) \
   $(LIBUNIVALUE) \
@@ -403,63 +403,38 @@ fairchainsd_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-fairchainsd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+faircoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
-# fairchains-cli binary #
-fairchains_cli_SOURCES = bitcoin-cli.cpp
-fairchains_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-fairchains_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-fairchains_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# bitcoin-cli binary #
+faircoin_cli_SOURCES = bitcoin-cli.cpp
+faircoin_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
+faircoin_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+faircoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-fairchains_cli_SOURCES += bitcoin-cli-res.rc
+faircoin_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
-fairchains_cli_LDADD = \
+faircoin_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO)
 
-fairchains_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
-
-# fairchains-tool binary #
-fairchains_tool_SOURCES = \
-  fairchains-tool.cpp \
-  fairchains-tool-input.cpp \
-  fairchains-tool-key.cpp \
-  fairchains-tool-input.h \
-  fairchains-tool-key.h
-fairchains_tool_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-fairchains_tool_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-fairchains_tool_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-
-if TARGET_WINDOWS
-fairchains_tool_SOURCES += fairchains-tool-res.rc
-endif
-
-fairchains_tool_LDADD = \
-  $(LIBUNIVALUE) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBSECP256K1)
-
-fairchains_tool_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+faircoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# fairchains-tx binary #
-fairchains_tx_SOURCES = bitcoin-tx.cpp
-fairchains_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-fairchains_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-fairchains_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# bitcoin-tx binary #
+faircoin_tx_SOURCES = bitcoin-tx.cpp
+faircoin_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+faircoin_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+faircoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-fairchains_tx_SOURCES += bitcoin-tx-res.rc
+faircoin_tx_SOURCES += bitcoin-tx-res.rc
 endif
 
-fairchains_tx_LDADD = \
+faircoin_tx_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
@@ -467,7 +442,7 @@ fairchains_tx_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBSECP256K1)
 
-fairchains_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+faircoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
 # bitcoinconsensus library #
@@ -571,7 +546,3 @@ endif
 if ENABLE_QT_TESTS
 include Makefile.qttest.include
 endif
-
-# Omni Core
-include Makefile.omnicore.include
-#

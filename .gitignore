@@ -1,11 +1,10 @@
 *.tar.gz
 
 *.exe
-src/fairchains
-src/fairchainsd
-src/fairchains-cli
-src/fairchains-tx
-src/fairchains-tool
+src/faircoin
+src/faircoind
+src/faircoin-cli
+src/faircoin-tx
 src/test/test_bitcoin
 src/test/test_bitcoin_fuzzy
 src/qt/test/test_bitcoin-qt
@@ -75,8 +74,8 @@ src/qt/test/moc*.cpp
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
-fairchains-qt
-FairChains-Qt.app
+faircoin-qt
+FairCoin-Qt.app
 
 # Unit-tests
 Makefile.test

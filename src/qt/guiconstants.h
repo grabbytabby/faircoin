@@ -46,9 +46,9 @@ static const int MAX_URI_LENGTH = 255;
 /* Number of frames in spinner animation */
 #define SPINNER_FRAMES 36
 
-#define QAPP_ORG_NAME "FairChains"
+#define QAPP_ORG_NAME "FairCoin2"
 #define QAPP_ORG_DOMAIN "fair-coin.org"
-#define QAPP_APP_NAME_DEFAULT "FairChains-Qt"
-#define QAPP_APP_NAME_TESTNET "FairChains-Qt-testnet"
+#define QAPP_APP_NAME_DEFAULT "FairCoin-Qt"
+#define QAPP_APP_NAME_TESTNET "FairCoin-Qt-testnet"
 
 #endif // BITCOIN_QT_GUICONSTANTS_H

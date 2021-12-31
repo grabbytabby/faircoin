@@ -6,7 +6,6 @@
 
 #include "addressbookpage.h"
 #include "askpassphrasedialog.h"
-#include "balancesdialog.h"
 #include "bitcoingui.h"
 #include "clientmodel.h"
 #include "guiutil.h"
@@ -15,34 +14,22 @@
 #include "platformstyle.h"
 #include "receivecoinsdialog.h"
 #include "sendcoinsdialog.h"
-#include "sendmpdialog.h"
-#include "lookupspdialog.h"
-#include "lookuptxdialog.h"
-#include "lookupaddressdialog.h"
-#include "metadexcanceldialog.h"
-#include "metadexdialog.h"
 #include "signverifymessagedialog.h"
-#include "tradehistorydialog.h"
 #include "transactiontablemodel.h"
 #include "transactionview.h"
-#include "txhistorydialog.h"
 #include "walletmodel.h"
 
 #include "ui_interface.h"
 
 #include <QAction>
 #include <QActionGroup>
-#include <QDebug>
-#include <QDialog>
 #include <QFileDialog>
-#include <QHeaderView>
 #include <QHBoxLayout>
 #include <QProgressDialog>
 #include <QPushButton>
-#include <QTableView>
 #include <QVBoxLayout>
 
-WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, const bool fHideFairChains):
+WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent):
     QStackedWidget(parent),
     clientModel(0),
     walletModel(0),
@@ -51,9 +38,7 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, cons
     // Create tabs
     overviewPage = new OverviewPage(platformStyle);
 
-    // Transactions page, Omni transactions in first tab, BTC only transactions in second tab
     transactionsPage = new QWidget(this);
-    bitcoinTXTab = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
     QHBoxLayout *hbox_buttons = new QHBoxLayout();
     transactionView = new TransactionView(platformStyle, this);
@@ -66,78 +51,21 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, cons
     hbox_buttons->addStretch();
     hbox_buttons->addWidget(exportButton);
     vbox->addLayout(hbox_buttons);
-    bitcoinTXTab->setLayout(vbox);
-    mpTXTab = new TXHistoryDialog;
-    transactionsPage = new QWidget(this);
-    QVBoxLayout *txvbox = new QVBoxLayout();
-    txTabHolder = new QTabWidget();
-    if (!fHideFairChains) {
-        txTabHolder->addTab(mpTXTab,tr("FairChains"));
-    }
-    txTabHolder->addTab(bitcoinTXTab,tr(strCurrencyName.c_str()));
-    txvbox->addWidget(txTabHolder);
-    transactionsPage->setLayout(txvbox);
-
-    balancesPage = new BalancesDialog();
+    transactionsPage->setLayout(vbox);
 
     receiveCoinsPage = new ReceiveCoinsDialog(platformStyle);
+    sendCoinsPage = new SendCoinsDialog(platformStyle);
+
     usedSendingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::SendingTab, this);
     usedReceivingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::ReceivingTab, this);
 
-    // sending page
-    sendCoinsPage = new QWidget(this);
-    QVBoxLayout *svbox = new QVBoxLayout();
-    sendCoinsTab = new SendCoinsDialog(platformStyle);
-    sendMPTab = new SendMPDialog(platformStyle);
-    sendTabHolder = new QTabWidget();
-    if (!fHideFairChains) {
-        sendTabHolder->addTab(sendMPTab,tr("FairChains"));
-    }
-    sendTabHolder->addTab(sendCoinsTab,tr(strCurrencyName.c_str()));
-    svbox->addWidget(sendTabHolder);
-    sendCoinsPage->setLayout(svbox);
-
-    /**
-     * exchange page is disabled in this version
-     *
-    exchangePage = new QWidget(this);
-    QVBoxLayout *exvbox = new QVBoxLayout();
-    metaDExTab = new MetaDExDialog();
-    cancelTab = new MetaDExCancelDialog();
-    QTabWidget *exTabHolder = new QTabWidget();
-    tradeHistoryTab = new TradeHistoryDialog;
-    // exTabHolder->addTab(new QWidget(),tr("Trade FairCoin/Mastercoin")); not yet implemented
-    exTabHolder->addTab(metaDExTab,tr("Trade FairChains Properties"));
-    exTabHolder->addTab(tradeHistoryTab,tr("Trade History"));
-    exTabHolder->addTab(cancelTab,tr("Cancel Orders"));
-    exvbox->addWidget(exTabHolder);
-    exchangePage->setLayout(exvbox);
-    **/
-
-    // toolbox page
-    toolboxPage = new QWidget(this);
-    QVBoxLayout *tvbox = new QVBoxLayout();
-    addressLookupTab = new LookupAddressDialog();
-    spLookupTab = new LookupSPDialog();
-    txLookupTab = new LookupTXDialog();
-    QTabWidget *tTabHolder = new QTabWidget();
-    tTabHolder->addTab(addressLookupTab,tr("Lookup Address"));
-    tTabHolder->addTab(spLookupTab,tr("Lookup Property"));
-    tTabHolder->addTab(txLookupTab,tr("Lookup Transaction"));
-    tvbox->addWidget(tTabHolder);
-    toolboxPage->setLayout(tvbox);
-
     addWidget(overviewPage);
-    addWidget(balancesPage);
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
-    // addWidget(exchangePage);
-    addWidget(toolboxPage);
 
     // Clicking on a transaction on the overview pre-selects the transaction on the transaction history page
     connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), transactionView, SLOT(focusTransaction(QModelIndex)));
-    connect(overviewPage, SIGNAL(omniTransactionClicked(uint256)), mpTXTab, SLOT(focusTransaction(uint256)));
 
     // Double-clicking on a transaction on the transaction history page shows details
     connect(transactionView, SIGNAL(doubleClicked(QModelIndex)), transactionView, SLOT(showDetails()));
@@ -145,8 +73,8 @@ WalletView::WalletView(const PlatformStyle *platformStyle, QWidget *parent, cons
     // Clicking on "Export" allows to export the transaction list
     connect(exportButton, SIGNAL(clicked()), transactionView, SLOT(exportClicked()));
 
-    // Pass through messages from sendCoinsTab
-    connect(sendCoinsTab, SIGNAL(message(QString,QString,unsigned int)), this, SIGNAL(message(QString,QString,unsigned int)));
+    // Pass through messages from sendCoinsPage
+    connect(sendCoinsPage, SIGNAL(message(QString,QString,unsigned int)), this, SIGNAL(message(QString,QString,unsigned int)));
     // Pass through messages from transactionView
     connect(transactionView, SIGNAL(message(QString,QString,unsigned int)), this, SIGNAL(message(QString,QString,unsigned int)));
 }
@@ -159,9 +87,8 @@ void WalletView::setBitcoinGUI(BitcoinGUI *gui)
 {
     if (gui)
     {
-        // Clicking on a transaction on the overview page simply sends you to either Omni/Bitcoin history page
+        // Clicking on a transaction on the overview page simply sends you to transaction history page
         connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), gui, SLOT(gotoHistoryPage()));
-        connect(overviewPage, SIGNAL(omniTransactionClicked(uint256)), gui, SLOT(gotoOmniHistoryTab()));
 
         // Receive and report messages
         connect(this, SIGNAL(message(QString,QString,unsigned int)), gui, SLOT(message(QString,QString,unsigned int)));
@@ -179,30 +106,20 @@ void WalletView::setClientModel(ClientModel *clientModel)
     this->clientModel = clientModel;
 
     overviewPage->setClientModel(clientModel);
-    balancesPage->setClientModel(clientModel);
-    sendMPTab->setClientModel(clientModel);
-    mpTXTab->setClientModel(clientModel);
-    // cancelTab->setClientModel(clientModel);
-    // tradeHistoryTab->setClientModel(clientModel);
-    // metaDExTab->setClientModel(clientModel);
+    sendCoinsPage->setClientModel(clientModel);
 }
 
 void WalletView::setWalletModel(WalletModel *walletModel)
 {
     this->walletModel = walletModel;
 
+    // Put transaction list in tabs
     transactionView->setModel(walletModel);
     overviewPage->setWalletModel(walletModel);
     receiveCoinsPage->setModel(walletModel);
+    sendCoinsPage->setModel(walletModel);
     usedReceivingAddressesPage->setModel(walletModel->getAddressTableModel());
     usedSendingAddressesPage->setModel(walletModel->getAddressTableModel());
-    sendCoinsTab->setModel(walletModel);
-    sendMPTab->setWalletModel(walletModel);
-    balancesPage->setWalletModel(walletModel);
-    mpTXTab->setWalletModel(walletModel);
-    // metaDExTab->setWalletModel(walletModel);
-    // tradeHistoryTab->setWalletModel(walletModel);
-    // cancelTab->setWalletModel(walletModel);
 
     if (walletModel)
     {
@@ -250,26 +167,9 @@ void WalletView::gotoOverviewPage()
     setCurrentWidget(overviewPage);
 }
 
-void WalletView::gotoBalancesPage()
-{
-    setCurrentWidget(balancesPage);
-}
-
 void WalletView::gotoHistoryPage()
 {
     setCurrentWidget(transactionsPage);
-}
-
-void WalletView::gotoBitcoinHistoryTab()
-{
-    setCurrentWidget(transactionsPage);
-    txTabHolder->setCurrentIndex(1);
-}
-
-void WalletView::gotoOmniHistoryTab()
-{
-    setCurrentWidget(transactionsPage);
-    txTabHolder->setCurrentIndex(0);
 }
 
 void WalletView::gotoReceiveCoinsPage()
@@ -277,22 +177,12 @@ void WalletView::gotoReceiveCoinsPage()
     setCurrentWidget(receiveCoinsPage);
 }
 
-void WalletView::gotoExchangePage()
-{
-    setCurrentWidget(exchangePage);
-}
-
-void WalletView::gotoToolboxPage()
-{
-    setCurrentWidget(toolboxPage);
-}
-
 void WalletView::gotoSendCoinsPage(QString addr)
 {
     setCurrentWidget(sendCoinsPage);
 
     if (!addr.isEmpty())
-        sendCoinsTab->setAddress(addr);
+        sendCoinsPage->setAddress(addr);
 }
 
 void WalletView::gotoSignMessageTab(QString addr)
@@ -321,8 +211,7 @@ void WalletView::gotoVerifyMessageTab(QString addr)
 
 bool WalletView::handlePaymentRequest(const SendCoinsRecipient& recipient)
 {
-    sendTabHolder->setCurrentIndex(1);
-    return sendCoinsTab->handlePaymentRequest(recipient);
+    return sendCoinsPage->handlePaymentRequest(recipient);
 }
 
 void WalletView::showOutOfSyncWarning(bool fShow)

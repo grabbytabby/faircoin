@@ -22,12 +22,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-#define BOOST_BIND_NO_PLACEHOLDERS
-#ifndef BOOST_BIND_HPP_INCLUDED
-#define BOOST_BIND_HPP_INCLUDED
-#endif
-#include <boost/bind/bind.hpp>
-//#include <boost/bind.hpp>
+#include <boost/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp> // for startswith() and endswith()
 
 #include "sync.h"
