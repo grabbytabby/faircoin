@@ -1,7 +1,7 @@
 # Init Fasito
 
 ### First load the firmware onto the device:
-Flasher software is available here: [teensy_loader_cli](https://github.com/faircoin/teensy_loader_cli)
+The Fasito.hex firmware file can be built from the [Fairo](https://github.com/faircoin/Fasito) repository. Flasher software is available here: [teensy_loader_cli](https://github.com/faircoin/teensy_loader_cli)
 ```
 ./teensy_loader_cli --mcu=FASITO -v -w Fasito.hex
 ```
