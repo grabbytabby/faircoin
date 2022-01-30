@@ -13,7 +13,7 @@ minicom -D /dev/ttyACM0
 Type `INFO` or `HELP` to test it. (Note: you will not get any feedback while you're typing until you press `<enter>`)
 
 ### Create helper script
-This script creats a new EC key pair and outputs the private and public parts.
+This script creates a new EC key pair and outputs the private and public parts.
 ```
 cat >./createDeviceAdminKey.sh << EOF
 #!/bin/bash
