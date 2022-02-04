@@ -37,7 +37,7 @@ Now let's check if the wallet can access Fasito:
 Check serial number:  
 Protection status:  
  
-## Initialise Fasito at the CVN-opertaors site
+## Initialise Fasito at the CVN-operators or Chain Admin site
 (Choose a uniqe hex CVN id which is used to identify the CVN in the network. In the next command replace the ID 0x12345678 with the chosen ID.)
 
 In the next command replace the word `PIN` with the actual PIN I sent you.  
