@@ -10,7 +10,9 @@ The Fasito.hex firmware file can be built from the [Fasito](https://github.com/f
 ```
 minicom -D /dev/ttyACM0
 ```
-Type `INFO` or `HELP` to test it. (Note: you will not get any feedback while you're typing until you press `<enter>`)
+Press `Ctrl+a` and the key `e` afterwards to activate local ECHOs. Otherwise you won't get any feedback while you're typing intil you press `<enter>`.
+
+Type `INFO` or `HELP` to test if the Fasito firmware responds.
 
 ### Create helper script
 This script creates a new EC key pair and outputs the private and public parts.
