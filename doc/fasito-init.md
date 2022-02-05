@@ -39,8 +39,11 @@ Available at [key creation script](https://raw.githubusercontent.com/faircoin/Fa
 
 This script creates three EC key pairs and outputs a possible INIT command.
 
+After download of key creation script make sure it's executable:
+`chmod +x createInitKeys.sh`
+
 ### Create the keys and a sample INIT command
-`./createDeviceAdminKey.sh`
+`./createInitKeys.sh`
 
 ### In minicom now initialise the token.
 If the keys and the suggested PIN suits you. Just paste the command with all five parameters into the minicom window.
